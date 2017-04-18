@@ -18,6 +18,8 @@ drawing_pad = pygame.Surface(drawing_size)
 drawing_pad.fill(drawing_pad_color)
 drawing_pad_pos = [40, 40]
 
+drawing_delta = 0
+
 isRunning = True
 while isRunning:
     screen.fill([255, 255, 255])
@@ -42,7 +44,7 @@ while isRunning:
                            mouse_pos,
                            10)
         mouse_movements = pygame.mouse.get_rel()
-        print(mouse_movements)
+        drawing_delta += sum(map(abs, mouse_movements))
 
     pygame.display.update()
     clock.tick(60)
