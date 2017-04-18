@@ -10,9 +10,12 @@ screen = pygame.display.set_mode(resolution)
 pygame.display.set_caption("Pictionary clone")
 clock = pygame.time.Clock()
 
+pen_color = [0, 0, 0]
+drawing_pad_color = [255, 255, 155]
+
 drawing_size = [500, 500]
 drawing_pad = pygame.Surface(drawing_size)
-drawing_pad.fill([255, 255, 155])
+drawing_pad.fill(drawing_pad_color)
 drawing_pad_pos = [40, 40]
 
 isRunning = True
@@ -25,8 +28,9 @@ while isRunning:
                      10)  # draw border
     screen.blit(drawing_pad, drawing_pad_pos)
 
-    if pygame.mouse.get_pressed()[0]:
-        color = [0, 0, 0]
+    mouse_down = pygame.mouse.get_pressed()
+    if mouse_down[0] or mouse_down[2]:
+        color = pen_color if mouse_down[0] else drawing_pad_color
         mouse_pos = pygame.mouse.get_pos()
 
         # offset mouse position by the drawing area
