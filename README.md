@@ -24,9 +24,9 @@ Tries to cheat with letters!    (-10pts)
 
 # Backlog
 
-| Item | Description | Estimated cost (1-5)|
+| Item | Description | Estimated cost (1-5) | Actual Cost |
 | ---- | ---- | ----: |
-| Drawing interface | | 3 |
+| Drawing interface | | 3 | 2 |
 | Connect multiple pygame clients to one server | | 4 |
 | Stream drawing to other clients | | 5 |
 | Word animations | | 3 |
