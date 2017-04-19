@@ -35,3 +35,11 @@ Tries to cheat with letters!    (-10pts)
 | Awarding ceremony animations | | 4 |
 | Automatic awards | | 5 |
 | Polish | | 5 |
+
+# Network commands
+| Name | Sender | Description |
+| ---- | ---- | :---- |
+| CONNECT | CLIENT | Server will send the game room and its game state to the client. |
+| GAMESTATE | SERVER | Client will receive the game state. It is up to the client to update its personal game state |
+| DRAW | CLIENT | Server will parse the position the client draws. All connected clients will be updated of the new game state |
+| DRAW_UPDATE | SERVER | Client will receive a list of changes other clients have done. |

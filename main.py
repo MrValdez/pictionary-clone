@@ -1,3 +1,4 @@
+import network
 import os
 import pygame
 
@@ -20,6 +21,8 @@ drawing_pad_pos = [40, 40]
 
 drawing_delta = 0
 
+client = network.client()
+
 isRunning = True
 while isRunning:
     screen.fill([255, 255, 255])
@@ -31,9 +34,16 @@ while isRunning:
     screen.blit(drawing_pad, drawing_pad_pos)
 
     mouse_down = pygame.mouse.get_pressed()
+    mouse_pos = pygame.mouse.get_pos()
+
+    network_data = client.update()
+    if network_data:
+        mouse_pos = network_data
+        mouse_down = list(mouse_down)
+        mouse_down[0] = True
+
     if mouse_down[0] or mouse_down[2]:
         color = pen_color if mouse_down[0] else drawing_pad_color
-        mouse_pos = pygame.mouse.get_pos()
 
         # offset mouse position by the drawing area
         mouse_pos = [mouse_pos[0] - drawing_pad_pos[0],
