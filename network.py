@@ -2,22 +2,28 @@ import json
 import zmq
 import packets
 
-addr = "tcp://localhost:667"
+server_port = 667
+broadcast_port = 668
+
+addr = "tcp://localhost:"
 
 
 class client:
     def __init__(self):
-        self.init_client()
-
-    def init_client(self):
         context = zmq.Context()
         sock = context.socket(zmq.SUB)
         sock.setsockopt_string(zmq.SUBSCRIBE, "")
-        sock.connect(addr)
+        sock.connect(addr + str(broadcast_port))
+
+        server = context.socket(zmq.REQ)
+        server.connect(addr + str(server_port))
+        server.send(packets.CONNECT)
 
         poller = zmq.Poller()
         poller.register(sock, zmq.POLLIN)
-        #sock.send(packets.CONNECT)
+        poller.register(server, zmq.POLLIN)
+
+        self.current_game_state = server.recv_json()
 
         self.context = context
         self.sock = sock

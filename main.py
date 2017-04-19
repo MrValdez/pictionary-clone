@@ -20,6 +20,9 @@ drawing_delta = 0
 
 client = network.client()
 
+for history in client.current_game_state:
+    p2_pad.draw_brush(history)
+
 isRunning = True
 while isRunning:
     screen.fill([255, 255, 255])

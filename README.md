@@ -27,8 +27,9 @@ Tries to cheat with letters!    (-10pts)
 | Item | Description | Estimated cost (1-5) | Actual Cost |
 | ---- | ---- | ----: |
 | Drawing interface | | 3 | 2 |
-| Connect multiple pygame clients to one server | | 4 |
 | Stream drawing to other clients | | 5 |
+| Send initial drawing to connecting clients | | 3 |
+| Connect multiple pygame clients to one server | | 4 |
 | Word animations | | 3 |
 | Send word choices (with correct word) to other clients | | 3 |
 | Manual awards | | 3 |
