@@ -29,7 +29,7 @@ Tries to cheat with letters!    (-10pts)
 | Drawing interface | | 3 | 2 |
 | Stream drawing to other clients | | 5 |
 | Send initial drawing to connecting clients | | 3 | 2 |
-| Connect multiple pygame clients to one server | | 4 |
+| Connect multiple pygame clients to one server | | 4 | 4 |
 | Game state manager | | 3 |
 | Stage 1 timer | | 2 |
 | Word animations | | 3 |
