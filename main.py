@@ -34,8 +34,11 @@ while isRunning:
     mouse_pos = pygame.mouse.get_pos()
     main_pad.update(mouse_down, mouse_pos)
 
-    network_data = client.update()
-    if network_data:
+    while True:
+        network_data = client.update()
+        if not network_data:
+            break
+
         pad_id, mouse_down, mouse_pos = network_data
         if pad_id == 1:
             pad_to_update = p2_pad
