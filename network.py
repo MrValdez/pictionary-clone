@@ -9,7 +9,7 @@ addr = "tcp://localhost:"
 
 
 class client:
-    def __init__(self):
+    def __init__(self, player_name):
         context = zmq.Context()
         sock = context.socket(zmq.SUB)
         sock.setsockopt_string(zmq.SUBSCRIBE, "")
@@ -22,8 +22,9 @@ class client:
         poller.register(sock, zmq.POLLIN)
         poller.register(server, zmq.POLLIN)
 
-        server.send_json([packets.CONNECT])
+        server.send_json([packets.CONNECT, [player_name]])
         self.current_game_state = server.recv_json()
+        self.id = self.current_game_state["Player ID"]
 
         self.context = context
         self.sock = sock
@@ -44,5 +45,8 @@ class client:
 
     def send_draw_command(self, mouse_down, position):
         data = [mouse_down, position]
-        self.server.send_json([packets.DRAW, data])
+        self.send(packets.DRAW, data)
+
+    def send(self, packet_type, data):
+        self.server.send_json([packet_type, self.id, data])
         self.server.recv()

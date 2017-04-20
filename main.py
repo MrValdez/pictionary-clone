@@ -12,13 +12,14 @@ screen = pygame.display.set_mode(resolution)
 pygame.display.set_caption("Pictionary clone")
 clock = pygame.time.Clock()
 
-client = network.client()
+player_name = "Sir Lancelot the Brave"
+client = network.client(player_name)
 
 main_pad = pad([40, 40], network_connection=client)
 p2_pad = pad([700, 40], scale=.45)
 p3_pad = pad([700, 300], scale=.45)
 
-for history in client.current_game_state:
+for history in client.current_game_state["History"]:
     pad_id, mouse_down, pos = history
     p2_pad.update(mouse_down, pos, use_screen_pos=False)
 

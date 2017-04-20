@@ -3,6 +3,7 @@ import random
 import zmq
 import packets
 import network
+import gamestate
 
 addr = "tcp://*:"
 
@@ -18,11 +19,10 @@ poller.register(broadcast, zmq.POLLIN)
 poller.register(server, zmq.POLLIN)
 
 history = []
-room_id = 1
+room = gamestate.Room()
 
-
-def send_broadcast(room_id, data):
-    broadcast.send_string("{} {}".format(room_id, json.dumps(data)))
+def send_broadcast(room, data):
+    broadcast.send_string("{} {}".format(room.id, json.dumps(data)))
 
 print("Server ready")
 while True:
@@ -40,18 +40,28 @@ while True:
 
             if command == packets.CONNECT:
                 print("New client connected")
-                server.send_json(history)
+
+                data = message[1]
+                name = data[0]
+                newPlayer = room.addPlayer(name)
+
+                data = packets.CONNECT_data.copy()
+                data["Player name"] = newPlayer.name
+                data["Player ID"] = newPlayer.id
+                data["History"] = history
+                server.send_json(data)
 
             if command == packets.DRAW:
                 server.send(bytes([packets.ACK]))
-                data = message[1]
+                playerID = message[1]
+                data = message[2]
                 data = [2, *data]
-                send_broadcast(room_id, data)
+                send_broadcast(room, data)
 
         data = [1,
                 [True, False, False],
                 [random.randint(0, 2000), random.randint(0, 2000)]]
-        send_broadcast(room_id, data)
+        send_broadcast(room, data)
 
         history.append(data)
 
