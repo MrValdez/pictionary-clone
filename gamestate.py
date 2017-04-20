@@ -8,11 +8,14 @@ Stage3 = 3
 
 
 class Player:
+    current_player_number = 1
     def __init__(self, name):
         self.name = name
         self.id = "".join([random.choice(string.ascii_lowercase)
                            for i in range(5)])
         self.history = []
+        self.number = Player.current_player_number
+        Player.current_player_number += 1
 
 
 class GameState:
@@ -41,6 +44,7 @@ class Room(GameState):
             print(" Currently registered: {}".format(list(self.players.keys())))
 
         data = [mouse_down, pos]
-        self.players[player_id].history.append(data)
+        player = self.players[player_id]
+        player.history.append(data)
 
-        self.server.send_broadcast(self.id, player_id, data)
+        self.server.send_broadcast(self.id, player, data)

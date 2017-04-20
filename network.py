@@ -25,6 +25,8 @@ class client:
         server.send_json([packets.CONNECT, [player_name]])
         self.current_game_state = server.recv_json()
         self.id = self.current_game_state["Player ID"]
+        self.player_number = self.current_game_state["Player number"]
+        print(self.player_number)
 
         self.context = context
         self.sock = sock
@@ -71,8 +73,6 @@ class Server:
         self.client_conn = client_conn
         self.poller = poller
 
-        self.players_in_room = []
-
     def __del__(self):
         self.poller.unregister(self.broadcast)
         self.poller.unregister(self.client_conn)
@@ -80,8 +80,8 @@ class Server:
     def read_clients(self):
         return self.client_conn.recv_json()
 
-    def send_broadcast(self, room_id, player_id, data):
-        player_number = 2
+    def send_broadcast(self, room_id, player, data):
+        player_number = player.number
         data = [player_number, *data]
         self.broadcast.send_string("{} {}".format(room_id, json.dumps(data)))
 
