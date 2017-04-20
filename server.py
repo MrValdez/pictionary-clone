@@ -19,6 +19,7 @@ poller.register(server, zmq.POLLIN)
 
 history = []
 
+print("Server ready")
 while True:
     try:
         socks = poller.poll(10)
@@ -39,7 +40,8 @@ while True:
                 server.send_json(history)
 
         room_id = 1
-        data = [random.randint(0, 2000), random.randint(0, 2000)]
+        data = [[True, False, False],
+                [random.randint(0, 2000), random.randint(0, 2000)]]
         broadcast.send_string("{} {}".format(room_id, json.dumps(data)))
 
         history.append(data)

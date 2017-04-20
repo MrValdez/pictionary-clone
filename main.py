@@ -21,7 +21,8 @@ drawing_delta = 0
 client = network.client()
 
 for history in client.current_game_state:
-    p2_pad.draw_brush(history)
+    mouse_down, pos = history
+    p2_pad.update(mouse_down, pos, use_screen_pos=False)
 
 isRunning = True
 while isRunning:
@@ -33,28 +34,12 @@ while isRunning:
 
     mouse_down = pygame.mouse.get_pressed()
     mouse_pos = pygame.mouse.get_pos()
-
-    if mouse_down[0]:
-        main_pad.draw_brush(mouse_pos)
-
-    if mouse_down[2]:
-        main_pad.erase_brush(mouse_pos)
-
-    if mouse_down[0] or mouse_down[2]:
-        mouse_movements = pygame.mouse.get_rel()
-        drawing_delta += sum(map(abs, mouse_movements))
+    main_pad.update(mouse_down, mouse_pos)
 
     network_data = client.update()
     if network_data:
-        mouse_pos = network_data
-        mouse_down = list(mouse_down)
-        mouse_down[0] = True
-
-    if mouse_down[0]:
-        p2_pad.draw_brush(mouse_pos)
-
-    if mouse_down[2]:
-        p2_pad.erase_brush(mouse_pos)
+        mouse_down, mouse_pos = network_data
+        p2_pad.update(mouse_down, mouse_pos, use_screen_pos=False)
 
     pygame.display.update()
     clock.tick(60)

@@ -6,11 +6,12 @@ drawing_size = [500, 500]
 
 
 class pad:
-    def __init__(self, pos, scale=1):
+    def __init__(self, screen_pos, scale=1):
         self.surface = pygame.Surface(drawing_size)
         self.scale = scale
         self.surface.fill(drawing_pad_color)
-        self.pos = pos
+        self.screen_pos = screen_pos
+        self.drawing_delta = 0
 
     def draw(self, screen):
         scaled_size = list(map(lambda x: int(x * self.scale), drawing_size))
@@ -19,22 +20,35 @@ class pad:
         # draw border
         pygame.draw.rect(screen,
                          [0, 0, 0],
-                         surface.get_rect().move(self.pos),
+                         surface.get_rect().move(self.screen_pos),
                          10)
 
-        screen.blit(surface, self.pos)
+        screen.blit(surface, self.screen_pos)
 
-    def draw_brush(self, pos):
-        self.apply_brush(pos, pen_color)
+    def update(self, mouse_down, pos, use_screen_pos=True):
 
-    def erase_brush(self, pos):
-        self.apply_brush(pos, drawing_pad_color)
+        if use_screen_pos:
+            # offset mouse position by the drawing area
+            pos = [pos[0] - self.screen_pos[0],
+                   pos[1] - self.screen_pos[1]]
+
+        if mouse_down[0]:
+            self.draw_brush(pos)
+
+        if mouse_down[2]:
+            self.erase_brush(pos)
+
+        if mouse_down[0] or mouse_down[2]:
+            mouse_movements = pygame.mouse.get_rel()
+            self.drawing_delta += sum(map(abs, mouse_movements))
+
+    def draw_brush(self, pad_xy):
+        self.apply_brush(pad_xy, pen_color)
+
+    def erase_brush(self, pad_xy):
+        self.apply_brush(pad_xy, drawing_pad_color)
 
     def apply_brush(self, pos, color):
-        # offset mouse position by the drawing area
-        pos = [pos[0] - self.pos[0],
-               pos[1] - self.pos[1]]
-
         pygame.draw.circle(self.surface,
                            color,
                            pos,
