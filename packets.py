@@ -1,3 +1,4 @@
 # Packet commands
-CONNECT = bytes([0])
-DRAW    = bytes([1])
+CONNECT = 0
+DRAW    = 1
+ACK     = 2

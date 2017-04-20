@@ -12,16 +12,14 @@ screen = pygame.display.set_mode(resolution)
 pygame.display.set_caption("Pictionary clone")
 clock = pygame.time.Clock()
 
-main_pad = pad([40, 40])
+client = network.client()
+
+main_pad = pad([40, 40], network_connection=client)
 p2_pad = pad([700, 40], scale=.45)
 p3_pad = pad([700, 300], scale=.45)
 
-drawing_delta = 0
-
-client = network.client()
-
 for history in client.current_game_state:
-    mouse_down, pos = history
+    pad_id, mouse_down, pos = history
     p2_pad.update(mouse_down, pos, use_screen_pos=False)
 
 isRunning = True
@@ -38,8 +36,13 @@ while isRunning:
 
     network_data = client.update()
     if network_data:
-        mouse_down, mouse_pos = network_data
-        p2_pad.update(mouse_down, mouse_pos, use_screen_pos=False)
+        pad_id, mouse_down, mouse_pos = network_data
+        if pad_id == 1:
+            pad_to_update = p2_pad
+        if pad_id == 2:
+            pad_to_update = p3_pad
+
+        pad_to_update.update(mouse_down, mouse_pos, use_screen_pos=False)
 
     pygame.display.update()
     clock.tick(60)

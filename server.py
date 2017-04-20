@@ -18,6 +18,11 @@ poller.register(broadcast, zmq.POLLIN)
 poller.register(server, zmq.POLLIN)
 
 history = []
+room_id = 1
+
+
+def send_broadcast(room_id, data):
+    broadcast.send_string("{} {}".format(room_id, json.dumps(data)))
 
 print("Server ready")
 while True:
@@ -29,20 +34,24 @@ while True:
             if socks[broadcast] == zmq.POLLIN:
                 message = broadcast.recv()
 
-                #parse messages
-                if message == packets.CONNECT:
-                    print("Connected")
-
         if server in socks:
-            message = server.recv()
-            if message == packets.CONNECT:
+            message = server.recv_json()
+            command = message[0]
+
+            if command == packets.CONNECT:
                 print("New client connected")
                 server.send_json(history)
 
-        room_id = 1
-        data = [[True, False, False],
+            if command == packets.DRAW:
+                server.send(bytes([packets.ACK]))
+                data = message[1]
+                data = [2, *data]
+                send_broadcast(room_id, data)
+
+        data = [1,
+                [True, False, False],
                 [random.randint(0, 2000), random.randint(0, 2000)]]
-        broadcast.send_string("{} {}".format(room_id, json.dumps(data)))
+        send_broadcast(room_id, data)
 
         history.append(data)
 

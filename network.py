@@ -17,16 +17,17 @@ class client:
 
         server = context.socket(zmq.REQ)
         server.connect(addr + str(server_port))
-        server.send(packets.CONNECT)
 
         poller = zmq.Poller()
         poller.register(sock, zmq.POLLIN)
         poller.register(server, zmq.POLLIN)
 
+        server.send_json([packets.CONNECT])
         self.current_game_state = server.recv_json()
 
         self.context = context
         self.sock = sock
+        self.server = server
         self.poller = poller
 
     def recv_subs_json(self):
@@ -40,3 +41,8 @@ class client:
             return self.recv_subs_json()
 
         return None
+
+    def send_draw_command(self, mouse_down, position):
+        data = [mouse_down, position]
+        self.server.send_json([packets.DRAW, data])
+        self.server.recv()

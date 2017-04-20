@@ -44,5 +44,6 @@ Tries to cheat with letters!    (-10pts)
 | ---- | ---- | :---- |
 | CONNECT | CLIENT | Server will send the game room and its game state to the client. |
 | GAMESTATE | SERVER | Client will receive the game state. It is up to the client to update its personal game state |
+| ACK | SERVER | Sent by the server to acknowledge receiving a client's packet |
 | DRAW | CLIENT | Server will parse the position the client draws. All connected clients will be updated of the new game state |
 | DRAW_UPDATE | SERVER | Client will receive a list of changes other clients have done. |
