@@ -40,13 +40,15 @@ while isRunning:
         if not network_data:
             break
 
+        pad_to_update = None
         pad_id, mouse_down, mouse_pos = network_data
         if pad_id == 1:
             pad_to_update = p2_pad
         if pad_id == 2:
             pad_to_update = p3_pad
 
-        pad_to_update.update(mouse_down, mouse_pos, use_screen_pos=False)
+        if pad_to_update:
+            pad_to_update.update(mouse_down, mouse_pos, use_screen_pos=False)
 
     pygame.display.update()
     clock.tick(60)

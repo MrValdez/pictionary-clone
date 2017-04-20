@@ -5,11 +5,11 @@ import packets
 server_port = 667
 broadcast_port = 668
 
-addr = "tcp://localhost:"
-
 
 class client:
     def __init__(self, player_name):
+        addr = "tcp://localhost:"
+
         context = zmq.Context()
         sock = context.socket(zmq.SUB)
         sock.setsockopt_string(zmq.SUBSCRIBE, "")
@@ -50,3 +50,54 @@ class client:
     def send(self, packet_type, data):
         self.server.send_json([packet_type, self.id, data])
         self.server.recv()
+
+
+class Server:
+    def __init__(self):
+        addr = "tcp://*:"
+
+        context = zmq.Context()
+        broadcast = context.socket(zmq.PUB)
+        broadcast.bind(addr + str(broadcast_port))
+
+        client_conn = context.socket(zmq.REP)
+        client_conn.bind(addr + str(server_port))
+
+        poller = zmq.Poller()
+        poller.register(broadcast, zmq.POLLIN)
+        poller.register(client_conn, zmq.POLLIN)
+
+        self.broadcast = broadcast
+        self.client_conn = client_conn
+        self.poller = poller
+
+        self.players_in_room = []
+
+    def __del__(self):
+        self.poller.unregister(self.broadcast)
+        self.poller.unregister(self.client_conn)
+
+    def read_clients(self):
+        return self.client_conn.recv_json()
+
+    def send_broadcast(self, room_id, player_id, data):
+        player_number = 2
+        data = [player_number, *data]
+        self.broadcast.send_string("{} {}".format(room_id, json.dumps(data)))
+
+    def update(self):
+        socks = self.poller.poll(10)
+        socks = dict(socks)
+
+        if self.broadcast in socks:
+            if socks[self.broadcast] == zmq.POLLIN:
+                message = self.broadcast.recv()
+
+        if self.client_conn in socks:
+            message = self.read_clients()
+            
+            packet = message[0]
+            data = message[1:]
+            return packet, data
+
+        return None, None
