@@ -26,7 +26,6 @@ class client:
         self.current_game_state = server.recv_json()
         self.id = self.current_game_state["Player ID"]
         self.player_number = self.current_game_state["Player number"]
-        print(self.player_number)
 
         self.context = context
         self.sock = sock
@@ -95,7 +94,7 @@ class Server:
 
         if self.client_conn in socks:
             message = self.read_clients()
-            
+
             packet = message[0]
             data = message[1:]
             return packet, data

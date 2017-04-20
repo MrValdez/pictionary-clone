@@ -19,9 +19,21 @@ main_pad = pad([40, 40], network_connection=client)
 p2_pad = pad([700, 40], scale=.45)
 p3_pad = pad([700, 300], scale=.45)
 
-for history in client.current_game_state["History"]:
-    pad_id, mouse_down, pos = history
-    p2_pad.update(mouse_down, pos, use_screen_pos=False)
+
+def update_drawing_pad(pad_id, mouse_down, mouse_pos):
+    pad_to_update = None
+    if pad_id == 0:
+        pad_to_update = p2_pad
+    if pad_id == 1:
+        pad_to_update = p3_pad
+
+    if pad_to_update:
+        pad_to_update.update(mouse_down, mouse_pos, use_screen_pos=False)
+
+for pad_id, history in enumerate(client.current_game_state["History"]):
+    for draw_command in history:
+        mouse_down, pos = draw_command
+        update_drawing_pad(pad_id, mouse_down, pos)
 
 isRunning = True
 while isRunning:
@@ -40,15 +52,8 @@ while isRunning:
         if not network_data:
             break
 
-        pad_to_update = None
         pad_id, mouse_down, mouse_pos = network_data
-        if pad_id == 1:
-            pad_to_update = p2_pad
-        if pad_id == 2:
-            pad_to_update = p3_pad
-
-        if pad_to_update:
-            pad_to_update.update(mouse_down, mouse_pos, use_screen_pos=False)
+        update_drawing_pad(pad_id, mouse_down, mouse_pos)
 
     pygame.display.update()
     clock.tick(60)

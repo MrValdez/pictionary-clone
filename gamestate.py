@@ -8,7 +8,8 @@ Stage3 = 3
 
 
 class Player:
-    current_player_number = 1
+    current_player_number = 0
+
     def __init__(self, name):
         self.name = name
         self.id = "".join([random.choice(string.ascii_lowercase)
@@ -31,6 +32,7 @@ class GameState:
                                                         newPlayer.id))
         return newPlayer
 
+
 class Room(GameState):
     def __init__(self, server):
         super(Room, self).__init__()
@@ -41,7 +43,8 @@ class Room(GameState):
         if player_id not in self.players:
             print("Invalid player_id sent")
             print(" Sent: {}".format(player_id))
-            print(" Currently registered: {}".format(list(self.players.keys())))
+            current_players = list(self.players.keys())
+            print(" Currently registered: {}".format(current_players))
 
         data = [mouse_down, pos]
         player = self.players[player_id]
