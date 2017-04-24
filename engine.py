@@ -19,7 +19,7 @@ class GameEngine:
         pygame.display.set_caption("Pictionary clone")
         self.clock = pygame.time.Clock()
         self.NormalText = pygame.font.Font(None, 25)
-        self.timer = 20 * 1000
+        self.timer = 0
         self.messages = ""
 
         self.main_pad = pad([40, 40])
@@ -69,6 +69,9 @@ class GameEngine:
             pad_to_update.update(mouse_down, mouse_pos, use_screen_pos=False)
 
     def _update_player_drawing_pad(self):
+        if self.timer <= 0:
+            return
+
         mouse_down = pygame.mouse.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
 
