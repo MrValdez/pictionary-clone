@@ -31,6 +31,11 @@ while True:
             data["Player number"] = newPlayer.number
             data["Player name"] = newPlayer.name
             data["Player ID"] = newPlayer.id
+
+            server.client_conn.send_json(data)
+
+        if packet == packets.ACK_CONNECT:
+            data = packets.ROOM_info.copy()
             data["Time remaining"] = room.time_remaining
 
             # get the history of each players, sorted by player number
@@ -43,7 +48,7 @@ while True:
             server.client_conn.send_json(data)
 
         if packet == packets.DRAW:
-            server.client_conn.send(bytes([packets.ACK]))
+            server.client_conn.send_json(packets.ACK)
 
             player_id = data[0]
             mouse_down, pos = data[1]

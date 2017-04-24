@@ -4,6 +4,8 @@ WAIT         = 1
 STATE_CHANGE = 2
 ACK          = 3
 DRAW         = 4
+ROOM_INFO    = 5
+ACK_CONNECT  = 6
 
 
 # Data structures for packets:
@@ -13,6 +15,9 @@ CONNECT_data = {
     "Player ID": "",                # a unique identifier used by player to authenticate to server
     "Player name": "",
     "Room ID": "",
+}
+
+ROOM_info = {
     "History": [],
     "Time remaining": 9 * 1000,     # in milliseconds
 }

@@ -11,38 +11,56 @@ class client:
         addr = "tcp://localhost:"
 
         context = zmq.Context()
-        sock = context.socket(zmq.SUB)
-        sock.setsockopt_string(zmq.SUBSCRIBE, "")
-        sock.connect(addr + str(broadcast_port))
+        broadcast = context.socket(zmq.SUB)
+        broadcast.setsockopt_string(zmq.SUBSCRIBE, "")
+        broadcast.connect(addr + str(broadcast_port))
 
         server = context.socket(zmq.REQ)
         server.connect(addr + str(server_port))
 
-        poller = zmq.Poller()
-        poller.register(sock, zmq.POLLIN)
-        poller.register(server, zmq.POLLIN)
+        client_poller = zmq.Poller()
+        client_poller.register(broadcast, zmq.POLLIN)
 
-        server.send_json([packets.CONNECT, [player_name]])
-        self.current_game_state = server.recv_json()
-        self.id = self.current_game_state["Player ID"]
-        self.player_number = self.current_game_state["Player number"]
+        server_poller = zmq.Poller()
+        server_poller.register(server, zmq.POLLIN)
 
         self.context = context
-        self.sock = sock
+        self.broadcast = broadcast
         self.server = server
-        self.poller = poller
+        self.client_poller = client_poller
+        self.server_poller = server_poller
 
-    def recv_subs_json(self):
-        msg = self.sock.recv_string()
-        msg = msg[msg.find(" "):].strip()
-        return json.loads(msg)
+        server.send_json([packets.CONNECT, [player_name]])
 
-    def update(self):
-        socks = dict(self.poller.poll(10))
-        if self.sock in socks:
-            return self.recv_subs_json()
+        current_game_state = server.recv_json()
+        self.id = current_game_state["Player ID"]
+        self.player_number = current_game_state["Player number"]
+        self.send(packets.ACK_CONNECT, None)
+
+    def _update_network_commands(self, socket, poller, recv_handler):
+        socks = dict(poller.poll(10))
+        if socket in socks:
+            return recv_handler(socket)
 
         return None
+
+    def update_client_commands(self):
+        def recv_subs_json(socket):
+            msg = socket.recv_string()
+            msg = msg[msg.find(" "):].strip()
+            return json.loads(msg)
+
+        return self._update_network_commands(self.broadcast,
+                                             self.client_poller,
+                                             recv_subs_json)
+
+    def update_server_commands(self):
+        def recv_json(socket):
+            return socket.recv_json()
+
+        return self._update_network_commands(self.server,
+                                             self.server_poller,
+                                             recv_json)
 
     def send_draw_command(self, mouse_down, position):
         data = [mouse_down, position]
@@ -50,7 +68,6 @@ class client:
 
     def send(self, packet_type, data):
         self.server.send_json([packet_type, self.id, data])
-        self.server.recv()
 
 
 class Server:

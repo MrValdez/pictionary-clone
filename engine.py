@@ -1,4 +1,5 @@
 import os
+import packets
 import pygame
 import network
 from drawingpad import pad
@@ -36,13 +37,6 @@ class GameEngine:
     def _init_player_state(self):
         self.client = network.client(self.player_name)
 
-        self.timer = self.client.current_game_state["Time remaining"]
-        for history in enumerate(self.client.current_game_state["History"]):
-            pad_id, draw_commands = history
-            for draw_command in draw_commands:
-                mouse_down, pos = draw_command
-                self._update_drawing_pad(pad_id, mouse_down, pos)
-
     def _draw_messages(self):
         output = self.NormalText.render(self.messages, True, [0, 0, 0])
         self.screen.blit(output, [40, 600])
@@ -79,7 +73,7 @@ class GameEngine:
 
     def _update_other_player_drawing_pad(self):
         while True:
-            network_data = self.client.update()
+            network_data = self.client.update_client_commands()
             if not network_data:
                 break
 
@@ -95,9 +89,28 @@ class GameEngine:
         if self.timer <= 0:
             self.messages += "TIME OVER. Waiting for server..."
 
+    def _update_server_commands(self):
+        while True:
+            data = self.client.update_server_commands()
+            if not data:
+                break
+
+            if data == packets.ACK:
+                # server receives our message. move lockstep to server
+                break
+
+            self.timer = data["Time remaining"]
+            for history in enumerate(data["History"]):
+                pad_id, draw_commands = history
+                for draw_command in draw_commands:
+                    mouse_down, pos = draw_command
+                    self._update_drawing_pad(pad_id, mouse_down, pos)
+
     def update(self):
         self.clock.tick(60)
         self.timer -= self.clock.get_time()
+
+        self._update_server_commands()
 
         self._update_player_drawing_pad()
         self._update_other_player_drawing_pad()
