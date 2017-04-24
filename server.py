@@ -5,13 +5,19 @@ import packets
 import network
 import gamestate
 
+USE_AI = False
+
 server = network.Server()
 room = gamestate.Room(server)
 
-# AI_player = room.addPlayer("LEONARDO")
+if USE_AI:
+    AI_player = room.addPlayer("LEONARDO")
 
 
 def update_AI():
+    if not USE_AI:
+        return
+
     mouse_down = [True, False, False]
     pos = [random.randint(0, 2000), random.randint(0, 2000)]
     room.update_history(AI_player.id, mouse_down, pos)
@@ -55,7 +61,7 @@ while True:
             mouse_down, pos = data[1]
             room.update_history(player_id, mouse_down, pos)
 
-#        update_AI()
+        update_AI()
         room.update()
     except KeyboardInterrupt:
         break
