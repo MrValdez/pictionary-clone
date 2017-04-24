@@ -7,6 +7,9 @@ Stage1 = 1
 Stage2 = 2
 Stage3 = 3
 
+# Game constants
+STAGE1_TIMER = 60 * 1000
+STAGE1_TIMER = 15 * 1000
 
 class Player:
     current_player_number = 0
@@ -40,7 +43,7 @@ class Room(GameState):
         super(Room, self).__init__()
         self.id = 1
         self.server = server
-        self.time_remaining = 60 * 1000
+        self.time_remaining = STAGE1_TIMER
 
     def update_history(self, player_id, mouse_down, pos):
         if player_id not in self.players:
