@@ -30,6 +30,7 @@ class Player:
         Player.current_player_number += 1
         self.drawing_answer = random.choice(possible_drawings)
 
+
 class GameState:
     def __init__(self):
         self.current_stage = STAGE_DRAWING
@@ -73,7 +74,7 @@ class Room(GameState):
 
     def change_stage(self, newStage):
         if (self.current_stage == STAGE_DRAWING and
-            newStage == STAGE_SELECT_ANSWER):
+           newStage == STAGE_SELECT_ANSWER):
             # transitioning from stage_drawing to stage_select_answer
             self.broadcast_change_to_stage_select_answer()
         else:
@@ -87,7 +88,7 @@ class Room(GameState):
 
         all_choices = []
         all_drawings = []
-        
+
         for player in players:
             wrong_answers = list(possible_drawings)
             wrong_answers.remove(player.drawing_answer)
