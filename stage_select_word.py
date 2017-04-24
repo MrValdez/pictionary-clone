@@ -34,7 +34,7 @@ class SelectWord(Stage):
 
         for draw_command in draw_commands:
             mouse_down, pos = draw_command
-            self.main_pad(mouse_down, pos)
+            self.main_pad.update(mouse_down, pos, use_screen_pos=False)
 
     def update_select_answer_stage(self, data):
         while data is None:
