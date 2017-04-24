@@ -1,15 +1,26 @@
 # Packet commands
-CONNECT = 0
-DRAW    = 1
-ACK     = 2
+CONNECT      = 0
+WAIT         = 1
+STATE_CHANGE = 2
+ACK          = 3
+DRAW         = 4
 
 
+# Data structures for packets:
 
-# CONNECT structure
 CONNECT_data = {
     "Player number": -1,            # a number used to identify player in broadcast
     "Player ID": "",                # a unique identifier used by player to authenticate to server
     "Player name": "",
     "Room ID": "",
     "History": [],
+    "Time remaining": 9 * 1000,     # in milliseconds
+}
+
+WAIT_data = {
+    "Timer": 0,
+}
+
+STATE_CHANGE_data = {
+    "New State": 0,
 }

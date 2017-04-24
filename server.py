@@ -31,6 +31,7 @@ while True:
             data["Player number"] = newPlayer.number
             data["Player name"] = newPlayer.name
             data["Player ID"] = newPlayer.id
+            data["Time remaining"] = room.time_remaining
 
             # get the history of each players, sorted by player number
             players = sorted(room.players.values(),
@@ -49,5 +50,6 @@ while True:
             room.update_history(player_id, mouse_down, pos)
 
 #        update_AI()
+        room.update()
     except KeyboardInterrupt:
         break

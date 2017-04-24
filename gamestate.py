@@ -1,3 +1,4 @@
+import pygame
 import random
 import string
 
@@ -23,6 +24,7 @@ class GameState:
     def __init__(self):
         self.current_stage = Stage1
         self.players = {}
+        self.clock = pygame.time.Clock()
 
     def addPlayer(self, name):
         newPlayer = Player(name)
@@ -38,6 +40,7 @@ class Room(GameState):
         super(Room, self).__init__()
         self.id = 1
         self.server = server
+        self.time_remaining = 60 * 1000
 
     def update_history(self, player_id, mouse_down, pos):
         if player_id not in self.players:
@@ -51,3 +54,8 @@ class Room(GameState):
         player.history.append(data)
 
         self.server.send_broadcast(self.id, player, data)
+
+    def update(self):
+        self.clock.tick()
+
+        self.time_remaining -= self.clock.get_time()
