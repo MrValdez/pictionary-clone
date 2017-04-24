@@ -2,7 +2,7 @@ import os
 import packets
 import pygame
 import network
-from drawingpad import pad
+import stage_drawing
 
 
 class GameEngine:
@@ -19,61 +19,18 @@ class GameEngine:
         self.screen = pygame.display.set_mode(self.resolution)
         pygame.display.set_caption("Pictionary clone")
         self.clock = pygame.time.Clock()
-        self.NormalText = pygame.font.Font(None, 25)
-        self.timer = 0
-        self.messages = ""
-
-        self.main_pad = pad([40, 40])
-        self.p2_pad = pad([700, 40], scale=.45)
-        self.p3_pad = pad([700, 300], scale=.45)
 
         self._connect_to_server()
 
-        self.main_pad.network_connection = self.client
+        self.current_stage = stage_drawing.Drawing(self.client)
 
     def _connect_to_server(self):
-        self._init_player_state()
-
-    def _init_player_state(self):
         self.client = network.client(self.player_name)
 
-    def _draw_messages(self):
-        pos_y = 600
-
-        for message in self.messages:
-            output = self.NormalText.render(message, True, [0, 0, 0])
-            self.screen.blit(output, [40, pos_y])
-            pos_y += output.get_height() + 10
-
     def draw(self):
-        self.screen.fill([255, 255, 255])
-
-        self.main_pad.draw(self.screen)
-        self.p2_pad.draw(self.screen)
-        self.p3_pad.draw(self.screen)
-
-        self._draw_messages()
+        self.current_stage.draw(self.screen)
 
         pygame.display.update()
-
-    def _update_drawing_pad(self, pad_id, mouse_down, mouse_pos):
-        pad_to_update = None
-        if pad_id == 0:
-            pad_to_update = self.p2_pad
-        if pad_id == 1:
-            pad_to_update = self.p3_pad
-
-        if pad_to_update:
-            pad_to_update.update(mouse_down, mouse_pos, use_screen_pos=False)
-
-    def _update_player_drawing_pad(self):
-        if self.timer <= 0:
-            return
-
-        mouse_down = pygame.mouse.get_pressed()
-        mouse_pos = pygame.mouse.get_pos()
-
-        self.main_pad.update(mouse_down, mouse_pos)
 
     def update_broadcast_commands(self):
         while True:
@@ -86,31 +43,13 @@ class GameEngine:
             if packet == packets.SELECT_ANSWER_INFO:
                 self._update_select_answer_stage(data)
 
-            if packet == packets.DRAW:
-                self._update_network_player_drawing_pad(data)
-
-    def _update_network_player_drawing_pad(self, data):
-        pad_id, mouse_down, mouse_pos = data
-        self._update_drawing_pad(pad_id, mouse_down, mouse_pos)
+            self.current_stage.update_broadcast_commands(packet, data)
 
     def _update_select_answer_stage(self, data):
         while data is None:
             # wait for the next broadcast
             data = self.client.update_client_commands()
         print(data)
-
-    def _update_messages(self):
-        messages = []
-
-        messages.append("Your drawing should be: \"{}\"".format(self.client.drawing_answer))
-
-        if self.timer > 0 and self.timer <= 10 * 1000:
-            messages.append("SECONDS LEFT: {:.2f}.".format(self.timer / 1000))
-
-        if self.timer <= 0:
-            messages.append("TIME OVER. Waiting for server...")
-
-        self.messages = messages
 
     def update_server_commands(self):
         while True:
@@ -122,19 +61,12 @@ class GameEngine:
                 # server receives our message. move lockstep to server
                 break
 
-            self.timer = data["Time remaining"]
-            for history in enumerate(data["History"]):
-                pad_id, draw_commands = history
-                for draw_command in draw_commands:
-                    mouse_down, pos = draw_command
-                    self._update_drawing_pad(pad_id, mouse_down, pos)
+            self.current_stage.update_server_commands(data)
 
     def update(self):
         self.clock.tick(60)
-        self.timer -= self.clock.get_time()
-        self._update_player_drawing_pad()
 
         self.update_server_commands()
         self.update_broadcast_commands()
 
-        self._update_messages()
+        self.current_stage.update(self.clock)
