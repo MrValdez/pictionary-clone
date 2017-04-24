@@ -1,11 +1,12 @@
 # Packet commands
-CONNECT      = 0
-WAIT         = 1
-STATE_CHANGE = 2
-ACK          = 3
-DRAW         = 4
-ROOM_INFO    = 5
-ACK_CONNECT  = 6
+CONNECT             = 0
+WAIT                = 1
+STATE_CHANGE        = 2
+ACK                 = 3
+DRAW                = 4
+ROOM_INFO           = 5
+ACK_CONNECT         = 6
+SELECT_ANSWER_INFO  = 7
 
 
 # Data structures for packets:
@@ -29,4 +30,9 @@ WAIT_data = {
 
 STATE_CHANGE_data = {
     "New State": 0,
+}
+
+SELECT_ANSWER_data = {
+    "Choices": [],
+    "Drawing": [],
 }

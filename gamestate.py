@@ -1,22 +1,25 @@
+from collections import OrderedDict
 import pygame
+import packets
 import random
 import string
 
 # Game stages
-Stage1 = 1
-Stage2 = 2
-Stage3 = 3
+STAGE_DRAWING = 1
+STAGE_SELECT_ANSWER = 2
 
 # Game constants
-STAGE1_TIMER = 60 * 1000
-STAGE1_TIMER = 15 * 1000
+STAGE_DRAWING_TIMER = 60 * 1000
+STAGE_DRAWING_TIMER = 1 * 1000
+STAGE_DRAWING_TIMER = 10 * 1000
+
+possible_drawings = [answer
+                     for answer in open("answers.txt").read().split("\n")
+                     if len(answer) > 2]
 
 
 class Player:
     current_player_number = 0
-    possible_drawings = [answer
-                         for answer in open("answers.txt").read().split("\n")
-                         if len(answer) > 2]
 
     def __init__(self, name):
         self.name = name
@@ -25,11 +28,11 @@ class Player:
         self.history = []
         self.number = Player.current_player_number
         Player.current_player_number += 1
-        self.drawing_answer = random.choice(self.possible_drawings)
+        self.drawing_answer = random.choice(possible_drawings)
 
 class GameState:
     def __init__(self):
-        self.current_stage = Stage1
+        self.current_stage = STAGE_DRAWING
         self.players = {}
         self.clock = pygame.time.Clock()
 
@@ -42,13 +45,16 @@ class GameState:
         print(" their drawing should be: {}".format(newPlayer.drawing_answer))
         return newPlayer
 
+    def change_stage(self, newStage):
+        self.current_stage = newStage
+
 
 class Room(GameState):
     def __init__(self, server):
         super(Room, self).__init__()
         self.id = 1
         self.server = server
-        self.time_remaining = STAGE1_TIMER
+        self.time_remaining = STAGE_DRAWING_TIMER
 
     def update_history(self, player_id, mouse_down, pos):
         if player_id not in self.players:
@@ -57,13 +63,51 @@ class Room(GameState):
             current_players = list(self.players.keys())
             print(" Currently registered: {}".format(current_players))
 
-        data = [mouse_down, pos]
-        player = self.players[player_id]
-        player.history.append(data)
+        history_data = [mouse_down, pos]
 
-        self.server.send_broadcast(self.id, player, data)
+        player = self.players[player_id]
+        player.history.append(history_data)
+
+        data = [player.number, *history_data]
+        self.server.send_broadcast(self.id, packets.DRAW, data)
+
+    def change_stage(self, newStage):
+        if (self.current_stage == STAGE_DRAWING and
+            newStage == STAGE_SELECT_ANSWER):
+            # transitioning from stage_drawing to stage_select_answer
+            self.broadcast_change_to_stage_select_answer()
+        else:
+            # there is no stage transition. do not call super
+            return
+
+        super(Room, self).change_stage(newStage)
+
+    def broadcast_change_to_stage_select_answer(self):
+        players = OrderedDict(self.players).values()    # force consistency
+
+        all_choices = []
+        all_drawings = []
+        
+        for player in players:
+            wrong_answers = list(possible_drawings)
+            wrong_answers.remove(player.drawing_answer)
+            wrong_answers = random.sample(wrong_answers, 3)
+            choices = wrong_answers + [player.drawing_answer]
+            random.shuffle(choices)
+
+            all_choices.append(choices)
+            all_drawings.append(player.history)
+
+        data = [all_choices, all_drawings]
+
+        print(data)
+        self.server.send_broadcast(self.id,
+                                   packets.SELECT_ANSWER_INFO,
+                                   data)
 
     def update(self):
         self.clock.tick()
 
         self.time_remaining -= self.clock.get_time()
+        if self.time_remaining <= 0:
+            self.change_stage(STAGE_SELECT_ANSWER)

@@ -34,7 +34,7 @@ Tries to cheat with letters!    (-10pts)
 | Game state manager | | 3 |
 | Stage 1 timer | | 2 |
 | Word animations | | 3 |
-| Send word choices (with correct word) to other clients | | 3 |
+| Send word choices (with correct word) to other clients | | 3 | 4 |
 | Manual awards | | 3 |
 | Awarding ceremony animations | | 4 |
 | Automatic awards | | 5 |
@@ -53,6 +53,10 @@ Tries to cheat with letters!    (-10pts)
 # Security issue
 
 1. The server-client network structure uses player id to authenticate the player. To mitigate hackers from randomly guessing and hijacking a player, the player's socket info (ip address, ip port, etc) should also be used. The fix is to change from ZeroMQ's REQ/REP network architecture to something else; probably PUSH/PULL?
+
+# Bugs
+
+1. Because the choices in STAGE_SELECT_ANSWER uses broadcast, any new clients that connected after the broadcast will miss the initial choices
 
 # Answers
 

@@ -98,9 +98,8 @@ class Server:
     def read_clients(self):
         return self.client_conn.recv_json()
 
-    def send_broadcast(self, room_id, player, data):
-        player_number = player.number
-        data = [player_number, *data]
+    def send_broadcast(self, room_id, packet, data):
+        data = [packet, *data]
         self.broadcast.send_string("{} {}".format(room_id, json.dumps(data)))
 
     def update(self):

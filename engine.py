@@ -75,14 +75,29 @@ class GameEngine:
 
         self.main_pad.update(mouse_down, mouse_pos)
 
-    def _update_other_player_drawing_pad(self):
+    def update_broadcast_commands(self):
         while True:
             network_data = self.client.update_client_commands()
             if not network_data:
                 break
 
-            pad_id, mouse_down, mouse_pos = network_data
-            self._update_drawing_pad(pad_id, mouse_down, mouse_pos)
+            packet, data = network_data[0], network_data[1:]
+
+            if packet == packets.SELECT_ANSWER_INFO:
+                self._update_select_answer_stage(data)
+
+            if packet == packets.DRAW:
+                self._update_network_player_drawing_pad(data)
+
+    def _update_network_player_drawing_pad(self, data):
+        pad_id, mouse_down, mouse_pos = data
+        self._update_drawing_pad(pad_id, mouse_down, mouse_pos)
+
+    def _update_select_answer_stage(self, data):
+        while data is None:
+            # wait for the next broadcast
+            data = self.client.update_client_commands()
+        print(data)
 
     def _update_messages(self):
         messages = []
@@ -97,7 +112,7 @@ class GameEngine:
 
         self.messages = messages
 
-    def _update_server_commands(self):
+    def update_server_commands(self):
         while True:
             data = self.client.update_server_commands()
             if not data:
@@ -117,10 +132,9 @@ class GameEngine:
     def update(self):
         self.clock.tick(60)
         self.timer -= self.clock.get_time()
-
-        self._update_server_commands()
-
         self._update_player_drawing_pad()
-        self._update_other_player_drawing_pad()
+
+        self.update_server_commands()
+        self.update_broadcast_commands()
 
         self._update_messages()
