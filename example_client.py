@@ -1,3 +1,5 @@
+# example code for client
+
 import zmq
 import json
 
