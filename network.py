@@ -35,6 +35,8 @@ class client:
         current_game_state = server.recv_json()
         self.id = current_game_state["Player ID"]
         self.player_number = current_game_state["Player number"]
+        self.drawing_answer = current_game_state["Drawing answer"]
+
         self.send(packets.ACK_CONNECT, None)
 
     def _update_network_commands(self, socket, poller, recv_handler):

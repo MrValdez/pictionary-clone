@@ -31,6 +31,7 @@ while True:
             data["Player number"] = newPlayer.number
             data["Player name"] = newPlayer.name
             data["Player ID"] = newPlayer.id
+            data["Drawing answer"] = newPlayer.drawing_answer
 
             server.client_conn.send_json(data)
 

@@ -53,3 +53,7 @@ Tries to cheat with letters!    (-10pts)
 # Security issue
 
 1. The server-client network structure uses player id to authenticate the player. To mitigate hackers from randomly guessing and hijacking a player, the player's socket info (ip address, ip port, etc) should also be used. The fix is to change from ZeroMQ's REQ/REP network architecture to something else; probably PUSH/PULL?
+
+# Answers
+
+Answer.txt contains the answers. These were taken from [tvtropes's indexes](http://tvtropes.org/pmwiki/index_report.php) (warning: TvTropes).

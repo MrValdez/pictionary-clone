@@ -11,8 +11,12 @@ Stage3 = 3
 STAGE1_TIMER = 60 * 1000
 STAGE1_TIMER = 15 * 1000
 
+
 class Player:
     current_player_number = 0
+    possible_drawings = [answer
+                         for answer in open("answers.txt").read().split("\n")
+                         if len(answer) > 2]
 
     def __init__(self, name):
         self.name = name
@@ -21,7 +25,7 @@ class Player:
         self.history = []
         self.number = Player.current_player_number
         Player.current_player_number += 1
-
+        self.drawing_answer = random.choice(self.possible_drawings)
 
 class GameState:
     def __init__(self):
@@ -35,6 +39,7 @@ class GameState:
 
         print("Added new player ({}) with id {}".format(newPlayer.name,
                                                         newPlayer.id))
+        print(" their drawing should be: {}".format(newPlayer.drawing_answer))
         return newPlayer
 
 

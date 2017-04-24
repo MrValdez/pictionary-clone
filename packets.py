@@ -15,6 +15,7 @@ CONNECT_data = {
     "Player ID": "",                # a unique identifier used by player to authenticate to server
     "Player name": "",
     "Room ID": "",
+    "Drawing answer": "42",
 }
 
 ROOM_info = {

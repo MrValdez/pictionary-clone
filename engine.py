@@ -38,8 +38,12 @@ class GameEngine:
         self.client = network.client(self.player_name)
 
     def _draw_messages(self):
-        output = self.NormalText.render(self.messages, True, [0, 0, 0])
-        self.screen.blit(output, [40, 600])
+        pos_y = 600
+
+        for message in self.messages:
+            output = self.NormalText.render(message, True, [0, 0, 0])
+            self.screen.blit(output, [40, pos_y])
+            pos_y += output.get_height() + 10
 
     def draw(self):
         self.screen.fill([255, 255, 255])
@@ -81,13 +85,17 @@ class GameEngine:
             self._update_drawing_pad(pad_id, mouse_down, mouse_pos)
 
     def _update_messages(self):
-        self.messages = ""
+        messages = []
+
+        messages.append("Your drawing should be: \"{}\"".format(self.client.drawing_answer))
 
         if self.timer > 0 and self.timer <= 10 * 1000:
-            self.messages += "SECONDS LEFT: {:.2f}".format(self.timer / 1000)
+            messages.append("SECONDS LEFT: {:.2f}.".format(self.timer / 1000))
 
         if self.timer <= 0:
-            self.messages += "TIME OVER. Waiting for server..."
+            messages.append("TIME OVER. Waiting for server...")
+
+        self.messages = messages
 
     def _update_server_commands(self):
         while True:
