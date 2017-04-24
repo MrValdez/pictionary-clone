@@ -5,6 +5,7 @@ import network
 import stage_drawing
 import stage_select_word
 
+
 class GameEngine:
     def __init__(self):
         os.environ["SDL_VIDEO_CENTERED"] = "1"
@@ -23,7 +24,6 @@ class GameEngine:
         self._connect_to_server()
 
         self.current_stage = stage_drawing.Drawing(self.client)
-        self.current_stage = stage_select_word.SelectWord(self.client)
 
     def _connect_to_server(self):
         self.client = network.client(self.player_name)
@@ -41,8 +41,12 @@ class GameEngine:
 
             packet, data = network_data[0], network_data[1:]
 
-            self.current_stage.update_broadcast_commands(packet, data)
-
+            if packet == packets.SELECT_ANSWER_INFO:
+                # transition to next stage
+                self.current_stage = stage_select_word.SelectWord(self.client)
+                self.current_stage.update_select_answer_stage(data)
+            else:
+                self.current_stage.update_broadcast_commands(packet, data)
 
     def update_server_commands(self):
         while True:

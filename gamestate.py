@@ -82,7 +82,7 @@ class Room(GameState):
             return
 
 #debug comment
-#        super(Room, self).change_stage(newStage)
+        super(Room, self).change_stage(newStage)
 
     def broadcast_change_to_stage_select_answer(self):
         players = OrderedDict(self.players).values()    # force consistency

@@ -27,12 +27,13 @@ class SelectWord(Stage):
             return
 
         self.messages = []
-        answers, draw_commands = self.player_answers[self.current_player_to_test]
+
+        answers, commands = self.player_answers[self.current_player_to_test]
 
         for answer in answers:
             self.messages.append(answer)
 
-        for draw_command in draw_commands:
+        for draw_command in commands:
             mouse_down, pos = draw_command
             self.main_pad.update(mouse_down, pos, use_screen_pos=False)
 
@@ -43,8 +44,7 @@ class SelectWord(Stage):
         self.player_answers = data
 
     def update_broadcast_commands(self, packet, data):
-        if packet == packets.SELECT_ANSWER_INFO:
-            self.update_select_answer_stage(data)
+        pass
 
     def update_server_commands(self, data):
         pass
