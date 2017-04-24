@@ -1,27 +1,20 @@
 from drawingpad import pad
+from stage_base import Stage
 import packets
 import pygame
 
 
-class Drawing:
+class Drawing(Stage):
     def __init__(self, network_client):
-        self.NormalText = pygame.font.Font(None, 25)
+        super(Drawing, self).__init__()
+
         self.client = network_client
 
         self.timer = 0
-        self.messages = ""
 
         self.main_pad = pad([40, 40], network_connection=network_client)
         self.p2_pad = pad([700, 40], scale=.45)
         self.p3_pad = pad([700, 300], scale=.45)
-
-    def draw_messages(self, screen):
-        pos_y = 600
-
-        for message in self.messages:
-            output = self.NormalText.render(message, True, [0, 0, 0])
-            screen.blit(output, [40, pos_y])
-            pos_y += output.get_height() + 10
 
     def draw(self, screen):
         screen.fill([255, 255, 255])
@@ -30,7 +23,7 @@ class Drawing:
         self.p2_pad.draw(screen)
         self.p3_pad.draw(screen)
 
-        self.draw_messages(screen)
+        self.draw_messages(screen, pos_y=600)
 
     def update_drawing_pad(self, pad_id, mouse_down, mouse_pos):
         pad_to_update = None

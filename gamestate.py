@@ -81,7 +81,8 @@ class Room(GameState):
             # there is no stage transition. do not call super
             return
 
-        super(Room, self).change_stage(newStage)
+#debug comment
+#        super(Room, self).change_stage(newStage)
 
     def broadcast_change_to_stage_select_answer(self):
         players = OrderedDict(self.players).values()    # force consistency
@@ -99,9 +100,8 @@ class Room(GameState):
             all_choices.append(choices)
             all_drawings.append(player.history)
 
-        data = [all_choices, all_drawings]
+        data = zip(all_choices, all_drawings)
 
-        print(data)
         self.server.send_broadcast(self.id,
                                    packets.SELECT_ANSWER_INFO,
                                    data)

@@ -3,7 +3,7 @@ import packets
 import pygame
 import network
 import stage_drawing
-
+import stage_select_word
 
 class GameEngine:
     def __init__(self):
@@ -23,6 +23,7 @@ class GameEngine:
         self._connect_to_server()
 
         self.current_stage = stage_drawing.Drawing(self.client)
+        self.current_stage = stage_select_word.SelectWord(self.client)
 
     def _connect_to_server(self):
         self.client = network.client(self.player_name)
@@ -40,16 +41,8 @@ class GameEngine:
 
             packet, data = network_data[0], network_data[1:]
 
-            if packet == packets.SELECT_ANSWER_INFO:
-                self._update_select_answer_stage(data)
-
             self.current_stage.update_broadcast_commands(packet, data)
 
-    def _update_select_answer_stage(self, data):
-        while data is None:
-            # wait for the next broadcast
-            data = self.client.update_client_commands()
-        print(data)
 
     def update_server_commands(self):
         while True:
