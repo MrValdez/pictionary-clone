@@ -8,6 +8,7 @@ ROOM_INFO           = 5
 ACK_CONNECT         = 6
 SELECT_ANSWER_INFO  = 7
 SEND_ANSWER         = 8
+SEND_CORRECT_ANSWER = 9
 
 
 # Data structures for packets:
@@ -36,4 +37,8 @@ STATE_CHANGE_data = {
 SELECT_ANSWER_data = {
     "Choices": [],
     "Drawing": [],
+}
+
+SEND_CORRECT_ANSWER_data = {
+    "Correct Answer": "",
 }

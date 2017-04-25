@@ -43,8 +43,6 @@ class SelectWord(Stage):
         if self.current_player_to_test >= len(self.player_answers):
             return
 
-        self.messages = []
-
         for output, rect, pos in self.button_renders:
             pygame.draw.rect(screen,
                              button_back_color,
@@ -78,6 +76,7 @@ class SelectWord(Stage):
         self.current_player_to_test = (
             (self.current_player_to_test + 1) % len(self.player_answers))
 
+        self.messages = []
         self.main_pad.clear()
         self.generate_buttons()
 
@@ -85,11 +84,10 @@ class SelectWord(Stage):
         pass
 
     def update_server_commands(self, data):
-        pass
+        correct_answer = data["Correct Answer"]
+        self.messages = ["The correct answer is \"{}\"".format(correct_answer)]
 
     def _update_send_answer(self, answer_index):
-        print("Sending answer #{}".format(answer_index))
-
         self.client.send_answer(answer_index,
                                 self.current_player_to_test)
 

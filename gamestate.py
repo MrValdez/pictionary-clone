@@ -57,6 +57,7 @@ class Room(GameState):
         self.id = 1
         self.server = server
         self.time_remaining = STAGE_DRAWING_TIMER
+        self.all_correct_answers = []
 
     def update_history(self, player_id, mouse_down, pos):
         if player_id not in self.players:
@@ -89,6 +90,7 @@ class Room(GameState):
 
         all_choices = []
         all_drawings = []
+        all_correct_answers = []
 
         for player in players:
             wrong_answers = list(possible_drawings)
@@ -99,12 +101,14 @@ class Room(GameState):
 
             all_choices.append(choices)
             all_drawings.append(player.history)
+            all_correct_answers.append(player.drawing_answer)
 
         data = zip(all_choices, all_drawings)
 
         self.server.send_broadcast(self.id,
                                    packets.SELECT_ANSWER_INFO,
                                    data)
+        self.all_correct_answers = all_correct_answers
 
     def update(self):
         self.clock.tick()

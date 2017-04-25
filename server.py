@@ -62,7 +62,12 @@ while True:
             room.update_history(player_id, mouse_down, pos)
 
         if packet == packets.SEND_ANSWER:
-            server.client_conn.send_json(packets.ACK)
+            playerID = data[0]
+            question_idx, player_choice = data[1]
+
+            to_send = packets.SEND_CORRECT_ANSWER_data.copy()
+            to_send["Correct Answer"] = room.all_correct_answers[question_idx]
+            server.client_conn.send_json(to_send)
 
             print("Message received: {}".format(data))
 
