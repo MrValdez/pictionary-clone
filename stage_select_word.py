@@ -42,13 +42,13 @@ class SelectWord(Stage):
 
         self.messages = []
 
-        commands = self.player_answers[self.current_player_to_test][1]
         for output, rect, pos in self.button_renders:
             pygame.draw.rect(screen,
                              button_back_color,
                              rect)
             screen.blit(output, pos)
 
+        commands = self.player_answers[self.current_player_to_test][1]
         for draw_command in commands:
             mouse_down, pos = draw_command
             self.main_pad.update(mouse_down, pos, use_screen_pos=False)
@@ -69,6 +69,13 @@ class SelectWord(Stage):
             data = self.client.update_client_commands()
 
         self.player_answers = data
+        self.switch_player_to_test()
+
+    def switch_player_to_test(self):
+        self.current_player_to_test = (
+            (self.current_player_to_test + 1) % len(self.player_answers))
+
+        self.main_pad.clear()
         self.generate_buttons()
 
     def update_broadcast_commands(self, packet, data):
@@ -80,9 +87,12 @@ class SelectWord(Stage):
     def update(self, clock, prev_mouse_down, mouse_down, mouse_pos):
         if not mouse_down[0] and prev_mouse_down[0]:
             # left click up
-            for i, button in enumerate(self.button_renders):
+            for answer_index, button in enumerate(self.button_renders):
                 output, rect, pos = button
                 if rect.collidepoint(mouse_pos):
-                    print("Sending answer #{}".format(i))
-                    self.client.send_answer(i)
+                    print("Sending answer #{}".format(answer_index))
+
+                    self.client.send_answer(answer_index,
+                                            self.current_player_to_test)
+                    self.switch_player_to_test()
                     break

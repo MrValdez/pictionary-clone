@@ -8,11 +8,15 @@ drawing_size = [500, 500]
 class pad:
     def __init__(self, screen_pos, scale=1, network_connection=None):
         self.surface = pygame.Surface(drawing_size)
+        self.clear()
+
         self.scale = scale
-        self.surface.fill(drawing_pad_color)
         self.screen_pos = screen_pos
         self.drawing_delta = 0
         self.network_connection = network_connection
+
+    def clear(self):
+        self.surface.fill(drawing_pad_color)
 
     def draw(self, screen):
         scaled_size = list(map(lambda x: int(x * self.scale), drawing_size))
