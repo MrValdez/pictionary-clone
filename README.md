@@ -32,9 +32,11 @@ Tries to cheat with letters!    (-10pts)
 | Connect multiple pygame clients to one server | | 4 | 4 |
 | Wait for other players | | 2 |  |
 | Game state manager | | 3 |
-| Stage 1 timer | | 2 |
+| Stage 1 timer | | 2 | 2 |
 | Word animations | | 3 |
 | Send word choices (with correct word) to other clients | | 3 | 4 |
+| Select word answers and send to server for evaluation | | 3 | 3 |
+| Display correct word answer | | 3 | |
 | Manual awards | | 3 |
 | Awarding ceremony animations | | 4 |
 | Automatic awards | | 5 |
