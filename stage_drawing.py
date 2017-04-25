@@ -49,8 +49,10 @@ class Drawing(Stage):
                    .format(self.client.drawing_answer))
         messages.append(message)
 
-        if self.timer > 0 and self.timer <= 10 * 1000:
-            messages.append("SECONDS LEFT: {:.2f}.".format(self.timer / 1000))
+        total_seconds = self.timer / 1000
+        minutes = int(total_seconds / 60)
+        seconds = int(total_seconds % 60)
+        messages.append("Time left: {}:{:02d}".format(minutes, seconds))
 
         if self.timer <= 0:
             messages.append("TIME OVER. Waiting for server...")
