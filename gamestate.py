@@ -11,7 +11,7 @@ STAGE_SELECT_ANSWER = 2
 # Game constants
 STAGE_DRAWING_TIMER = 60 * 1000
 STAGE_DRAWING_TIMER = 1 * 1000
-STAGE_DRAWING_TIMER = 10 * 1000
+#STAGE_DRAWING_TIMER = 15 * 1000
 
 possible_drawings = [answer
                      for answer in open("answers.txt").read().split("\n")
@@ -82,7 +82,7 @@ class Room(GameState):
             return
 
 #debug comment
-        super(Room, self).change_stage(newStage)
+#        super(Room, self).change_stage(newStage)
 
     def broadcast_change_to_stage_select_answer(self):
         players = OrderedDict(self.players).values()    # force consistency

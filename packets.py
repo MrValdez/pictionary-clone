@@ -7,6 +7,7 @@ DRAW                = 4
 ROOM_INFO           = 5
 ACK_CONNECT         = 6
 SELECT_ANSWER_INFO  = 7
+SEND_ANSWER         = 8
 
 
 # Data structures for packets:

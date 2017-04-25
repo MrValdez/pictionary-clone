@@ -61,6 +61,11 @@ while True:
             mouse_down, pos = data[1]
             room.update_history(player_id, mouse_down, pos)
 
+        if packet == packets.SEND_ANSWER:
+            server.client_conn.send_json(packets.ACK)
+
+            print("Message received: {}".format(data))
+
         update_AI()
         room.update()
     except KeyboardInterrupt:

@@ -68,6 +68,10 @@ class client:
         data = [mouse_down, position]
         self.send(packets.DRAW, data)
 
+    def send_answer(self, answer_index):
+        data = [answer_index]
+        self.send(packets.SEND_ANSWER, data)
+
     def send(self, packet_type, data):
         self.server.send_json([packet_type, self.id, data])
 

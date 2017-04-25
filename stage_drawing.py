@@ -35,12 +35,10 @@ class Drawing(Stage):
         if pad_to_update:
             pad_to_update.update(mouse_down, mouse_pos, use_screen_pos=False)
 
-    def update_player_drawing_pad(self):
+    def update_player_drawing_pad(self,
+                                  prev_mouse_down, mouse_down, mouse_pos):
         if self.timer <= 0:
             return
-
-        mouse_down = pygame.mouse.get_pressed()
-        mouse_pos = pygame.mouse.get_pos()
 
         self.main_pad.update(mouse_down, mouse_pos)
 
@@ -75,7 +73,7 @@ class Drawing(Stage):
                 mouse_down, pos = draw_command
                 self.update_drawing_pad(pad_id, mouse_down, pos)
 
-    def update(self, clock):
+    def update(self, clock, prev_mouse_down, mouse_down, mouse_pos):
         self.timer -= clock.get_time()
-        self.update_player_drawing_pad()
+        self.update_player_drawing_pad(prev_mouse_down, mouse_down, mouse_pos)
         self.update_messages()

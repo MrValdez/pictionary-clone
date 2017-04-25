@@ -15,7 +15,7 @@ class Stage:
     def update_server_commands(self, data):
         pass
 
-    def update(self, clock):
+    def update(self, clock, prev_mouse_down, mouse_down, mouse_pos):
         pass
 
     def draw_messages(self, screen, pos_y):

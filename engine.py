@@ -24,6 +24,7 @@ class GameEngine:
         self._connect_to_server()
 
         self.current_stage = stage_drawing.Drawing(self.client)
+        self.prev_mouse_down = pygame.mouse.get_pressed()
 
     def _connect_to_server(self):
         self.client = network.client(self.player_name)
@@ -63,7 +64,13 @@ class GameEngine:
     def update(self):
         self.clock.tick(60)
 
+        mouse_down = pygame.mouse.get_pressed()
+        mouse_pos = pygame.mouse.get_pos()
+
         self.update_server_commands()
         self.update_broadcast_commands()
 
-        self.current_stage.update(self.clock)
+        self.current_stage.update(self.clock,
+                                  self.prev_mouse_down, mouse_down, mouse_pos)
+
+        self.prev_mouse_down = mouse_down
