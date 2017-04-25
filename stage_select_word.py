@@ -5,6 +5,7 @@ import pygame
 
 button_back_color = [255, 128, 255]
 button_width = 100
+timer_to_next_question = 1000
 
 
 class SelectWord(Stage):
@@ -16,6 +17,8 @@ class SelectWord(Stage):
         self.client = network_client
         self.player_answers = []
         self.current_player_to_test = 0
+        self.wait_for_next_question = False
+        self.current_timer_to_next_question = 0
 
         col1 = 50
         col2 = 750
@@ -84,15 +87,28 @@ class SelectWord(Stage):
     def update_server_commands(self, data):
         pass
 
+    def _update_send_answer(self, answer_index):
+        print("Sending answer #{}".format(answer_index))
+
+        self.client.send_answer(answer_index,
+                                self.current_player_to_test)
+
+        self.wait_for_next_question = True
+        self.current_timer_to_next_question = timer_to_next_question
+
     def update(self, clock, prev_mouse_down, mouse_down, mouse_pos):
         if not mouse_down[0] and prev_mouse_down[0]:
             # left click up
             for answer_index, button in enumerate(self.button_renders):
                 output, rect, pos = button
                 if rect.collidepoint(mouse_pos):
-                    print("Sending answer #{}".format(answer_index))
+                    self._update_send_answer(answer_index)
 
-                    self.client.send_answer(answer_index,
-                                            self.current_player_to_test)
-                    self.switch_player_to_test()
                     break
+
+        if self.wait_for_next_question:
+            self.current_timer_to_next_question -= clock.get_time()
+
+            if self.current_timer_to_next_question <= 0:
+                self.wait_for_next_question = False
+                self.switch_player_to_test()
