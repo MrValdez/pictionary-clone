@@ -69,8 +69,6 @@ while True:
             to_send["Correct Answer"] = room.all_correct_answers[question_idx]
             server.client_conn.send_json(to_send)
 
-            print("Message received: {}".format(data))
-
         update_AI()
         room.update()
     except KeyboardInterrupt:
