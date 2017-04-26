@@ -35,10 +35,11 @@ class Player:
 
 
 class GameState:
-    def __init__(self):
+    def __init__(self, network_conn):
         self.current_stage = STAGE_DRAWING
         self.players = {}
         self.clock = pygame.time.Clock()
+        self.conn = network_conn
 
     def addPlayer(self, name):
         newPlayer = Player(name)
@@ -54,10 +55,9 @@ class GameState:
 
 
 class Room(GameState):
-    def __init__(self, server):
-        super(Room, self).__init__()
+    def __init__(self, network_conn):
+        super(Room, self).__init__(network_conn)
         self.id = 1
-        self.server = server
         self.time_remaining = STAGE_DRAWING_TIMER
         self.all_correct_answers = []
 
@@ -74,7 +74,7 @@ class Room(GameState):
         player.history.append(history_data)
 
         data = [player.number, *history_data]
-        self.server.send_broadcast(self.id, packets.DRAW, data)
+        self.conn.send_broadcast(self.id, packets.DRAW, data)
 
     def change_stage(self, newStage):
         if (self.current_stage == STAGE_DRAWING and
@@ -107,7 +107,7 @@ class Room(GameState):
 
         data = zip(all_choices, all_drawings)
 
-        self.server.send_broadcast(self.id,
+        self.conn.send_broadcast(self.id,
                                    packets.SELECT_ANSWER_INFO,
                                    data)
         self.all_correct_answers = all_correct_answers
@@ -132,7 +132,7 @@ class Room(GameState):
             data["Player ID"] = newPlayer.id
             data["Drawing answer"] = newPlayer.drawing_answer
 
-            self.server.client_conn.send_json(data)
+            self.conn.client_conn.send_json(data)
 
         if packet == packets.ACK_CONNECT:
             data = packets.ROOM_info.copy()
@@ -145,10 +145,10 @@ class Room(GameState):
                                for player in players
                                if len(player.history)]
 
-            self.server.client_conn.send_json(data)
+            self.conn.client_conn.send_json(data)
 
         if packet == packets.DRAW:
-            self.server.client_conn.send_json(packets.ACK)
+            self.conn.client_conn.send_json(packets.ACK)
 
             player_id = data[0]
             mouse_down, pos = data[1]
@@ -160,4 +160,4 @@ class Room(GameState):
 
             to_send = packets.SEND_CORRECT_ANSWER_data.copy()
             to_send["Correct Answer"] = self.all_correct_answers[question_idx]
-            self.server.client_conn.send_json(to_send)
+            self.conn.client_conn.send_json(to_send)
