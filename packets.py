@@ -9,6 +9,9 @@ ACK_CONNECT         = 6
 SELECT_ANSWER_INFO  = 7
 SEND_ANSWER         = 8
 SEND_CORRECT_ANSWER = 9
+RESULTS             = 10
+DRAWING_INFO        = 11
+GUESS_INFO          = 12
 
 
 # Data structures for packets:
@@ -41,4 +44,22 @@ SELECT_ANSWER_data = {
 
 SEND_CORRECT_ANSWER_data = {
     "Correct Answer": "",
+}
+
+RESULTS_data = {
+    "Points delta": 0,
+    "Time remaining": 0,
+    "Message": "",
+}
+
+DRAWING_INFO_data = {
+    "Drawing answer": "42",
+    "Time remaining": 9 * 1000,
+}
+
+GUESS_INFO_data = {
+    "Choices": [],
+    "Drawing": [],
+    "Time remaining": 9 * 1000,
+    
 }
