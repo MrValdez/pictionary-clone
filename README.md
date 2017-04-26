@@ -2,6 +2,8 @@
 
 This game is a combination of Pictionary, Pictomania, and Drawful (from You don't know Jack) with my own additional game design additions.
 
+The game engine uses the [Flux programming pattern](https://www.youtube.com/watch?list=PLb0IAmt7-GS188xDYE-u1ShQmFFGbrk0v&v=nYkdrAPrdcw).
+
 
 # Stages
 1. Drawing stage
@@ -34,6 +36,7 @@ Tries to cheat with letters!    (-10pts)
 | Game state manager | | 3 |
 | Stage 1 timer | | 2 | 2 |
 | Word animations | | 3 |
+| Apply Flux programming pattern | | 4 |
 | Send word choices (with correct word) to other clients | | 3 | 4 |
 | Select word answers and send to server for evaluation | | 3 | 3 |
 | Display correct word answer | | 3 | |
