@@ -34,6 +34,13 @@ class GameEngine:
 
         pygame.display.update()
 
+    def transition_stage(self, packet, data):
+        print("transitioning to:")
+        print(packet)
+        print("Data:")
+        print(data)
+        print("")
+
     def update_broadcast_commands(self):
         while True:
             network_data = self.client.update_client_commands()
@@ -51,15 +58,20 @@ class GameEngine:
 
     def update_server_commands(self):
         while True:
-            data = self.client.update_server_commands()
-            if not data:
+            network_data = self.client.update_server_commands()
+            if not network_data:
                 break
 
-            if data == packets.ACK:
+            if network_data == packets.ACK:
                 # server receives our message. move lockstep to server
                 break
 
-            self.current_stage.update_server_commands(data)
+            packet, data = network_data[0], network_data[1:]
+
+            if packet == packets.DRAWING_INFO or packet == packets.GUESS_INFO:
+                self.transition_stage(packet, data)
+            else:
+                self.current_stage.update_server_commands(packet, data)
 
     def update(self):
         self.clock.tick(60)

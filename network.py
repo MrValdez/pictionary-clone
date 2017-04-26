@@ -37,7 +37,7 @@ class client:
         self.player_number = current_game_state["Player number"]
         self.drawing_answer = current_game_state["Drawing answer"]
 
-        self.send(packets.ACK_CONNECT, None)
+        self.send(packets.ACK_CONNECT, [self.id])
 
     def _update_network_commands(self, socket, poller, recv_handler):
         socks = dict(poller.poll(10))

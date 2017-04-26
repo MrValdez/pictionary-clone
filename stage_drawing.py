@@ -19,7 +19,7 @@ class Drawing(Stage):
         screen.fill([255, 255, 255])
 
         self.main_pad.draw(screen)
-        self.viewer.draw(screen)
+        self.spectator_pad.draw(screen)
 
         self.draw_messages(screen, pos_y=600)
 
@@ -59,7 +59,8 @@ class Drawing(Stage):
         if packet == packets.DRAW:
             self.update_network_player_drawing_pad(data)
 
-    def update_server_commands(self, data):
+    def update_server_commands(self, packet, data):
+        print(packet, data)
         self.timer = data["Time remaining"]
         for history in enumerate(data["History"]):
             pad_id, draw_commands = history

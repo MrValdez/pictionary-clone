@@ -6,6 +6,10 @@ import random
 import string
 import zmq
 
+# Player status
+PLAYER_STATUS_DRAWER = 0
+PLAYER_STATUS_GUESSER = 1
+
 # Game stages
 STAGE_DRAWING = 1
 STAGE_SELECT_ANSWER = 2
@@ -31,6 +35,8 @@ class Player:
         self.history = []
         self.number = Player.current_player_number
         Player.current_player_number += 1
+
+        self.status = PLAYER_STATUS_DRAWER
         self.drawing_answer = random.choice(possible_drawings)
 
 
@@ -50,9 +56,14 @@ class GameState:
         print(" their drawing should be: {}".format(newPlayer.drawing_answer))
         return newPlayer
 
+    def getPlayer(self, id):
+        for player_id, player in self.players.items():
+            if player_id == id:
+                return player
+        return None
+
     def change_stage(self, newStage):
         self.current_stage = newStage
-
 
 class Room(GameState):
     def __init__(self, network_conn):
@@ -136,18 +147,7 @@ class Room(GameState):
             self.conn.client_conn.send_json(data)
 
         if packet == packets.ACK_CONNECT:
-            data = packets.ROOM_info.copy()
-            data["Time remaining"] = self.time_remaining
-
-            # get the history of each players, sorted by player number
-            players = sorted(self.players.values(),
-                             key=lambda x: x.number)
-            data["History"] = [player.history
-                               for player in players
-                               if len(player.history)]
-
-            self.conn.client_conn.send_json(data)
-
+            self.send_player_stage_info(data)
         if packet == packets.DRAW:
             self.conn.client_conn.send_json(packets.ACK)
 
@@ -162,3 +162,22 @@ class Room(GameState):
             to_send = packets.SEND_CORRECT_ANSWER_data.copy()
             to_send["Correct Answer"] = self.all_correct_answers[question_idx]
             self.conn.client_conn.send_json(to_send)
+
+    def send_player_stage_info(self, data):
+        player_id = data[0]
+        player = self.getPlayer(player_id)
+
+        # figure out if player is guesser or drawer.
+        if player.status == PLAYER_STATUS_DRAWER:
+            packet_id = packets.DRAWING_INFO
+            data = packets.DRAWING_INFO_data.copy()
+            data["Drawing answer"] = player.drawing_answer
+
+        elif player.status == PLAYER_STATUS_GUESSER:
+            packet_id = packets.GUESS_INFO
+            data = packets.GUESS_INFO_data.copy()
+            data["Choices"] = ["a", "b"]
+            data["Drawing"] = activePlayer.history
+
+        data["Time remaining"] = self.time_remaining
+        self.conn.client_conn.send_json([packet_id, data])

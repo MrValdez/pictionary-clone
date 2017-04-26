@@ -12,7 +12,7 @@ class Stage:
     def update_broadcast_commands(self, packet, data):
         pass
 
-    def update_server_commands(self, data):
+    def update_server_commands(self, packet, data):
         pass
 
     def update(self, clock, prev_mouse_down, mouse_down, mouse_pos):

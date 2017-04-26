@@ -83,7 +83,7 @@ class SelectWord(Stage):
     def update_broadcast_commands(self, packet, data):
         pass
 
-    def update_server_commands(self, data):
+    def update_server_commands(self, packet, data):
         correct_answer = data["Correct Answer"]
         self.messages = ["The correct answer is \"{}\"".format(correct_answer)]
 
