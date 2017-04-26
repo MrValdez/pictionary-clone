@@ -60,6 +60,7 @@ class Room(GameState):
         self.id = 1
         self.time_remaining = STAGE_DRAWING_TIMER
         self.all_correct_answers = []
+        self.active_drawing_player = 0
 
     def update_history(self, player_id, mouse_down, pos):
         if player_id not in self.players:
