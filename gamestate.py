@@ -1,8 +1,10 @@
 from collections import OrderedDict
+import json
 import pygame
 import packets
 import random
 import string
+import zmq
 
 # Game stages
 STAGE_DRAWING = 1
@@ -116,3 +118,46 @@ class Room(GameState):
         self.time_remaining -= self.clock.get_time()
         if self.time_remaining <= 0:
             self.change_stage(STAGE_SELECT_ANSWER)
+
+    def update_network(self, packet, data):
+        if packet == packets.CONNECT:
+            print("New client connected")
+
+            name = data[0]
+            newPlayer = self.addPlayer(name)
+
+            data = packets.CONNECT_data.copy()
+            data["Player number"] = newPlayer.number
+            data["Player name"] = newPlayer.name
+            data["Player ID"] = newPlayer.id
+            data["Drawing answer"] = newPlayer.drawing_answer
+
+            self.server.client_conn.send_json(data)
+
+        if packet == packets.ACK_CONNECT:
+            data = packets.ROOM_info.copy()
+            data["Time remaining"] = self.time_remaining
+
+            # get the history of each players, sorted by player number
+            players = sorted(self.players.values(),
+                             key=lambda x: x.number)
+            data["History"] = [player.history
+                               for player in players
+                               if len(player.history)]
+
+            self.server.client_conn.send_json(data)
+
+        if packet == packets.DRAW:
+            self.server.client_conn.send_json(packets.ACK)
+
+            player_id = data[0]
+            mouse_down, pos = data[1]
+            self.update_history(player_id, mouse_down, pos)
+
+        if packet == packets.SEND_ANSWER:
+            playerID = data[0]
+            question_idx, player_choice = data[1]
+
+            to_send = packets.SEND_CORRECT_ANSWER_data.copy()
+            to_send["Correct Answer"] = self.all_correct_answers[question_idx]
+            self.server.client_conn.send_json(to_send)
