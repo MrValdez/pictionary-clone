@@ -2,7 +2,7 @@
 
 This game is a combination of Pictionary, Pictomania, and Drawful (from You don't know Jack) with my own additional game design additions.
 
-The game engine uses the [Flux programming pattern](https://www.youtube.com/watch?list=PLb0IAmt7-GS188xDYE-u1ShQmFFGbrk0v&v=nYkdrAPrdcw).
+The game engine uses the [Flux programming pattern](https://facebook.github.io/flux/docs/in-depth-overview.html#content).
 
 
 # Stages
