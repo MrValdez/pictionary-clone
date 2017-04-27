@@ -164,7 +164,8 @@ class Room(GameState):
 
         if self.time_remaining % 3 == 0:
             # broadcast current time every 3 seconds
-            self.conn.send_broadcast(self.id, packets.TIME, [self.time_remaining])
+            self.conn.send_broadcast(self.id,
+                                     packets.TIME, [self.time_remaining])
 
     def update_network(self, packet, data):
         if packet == packets.CONNECT:
@@ -200,8 +201,9 @@ class Room(GameState):
             if player is None:
                 return
 
-            if player.timer > 0:
-                # player is under penalty time
+            if player.timer > 0 or self.start_transition_to_next_round:
+                # If the player is under penalty time
+                # or we're transition to another stage,
                 # ignore their guess
                 self.conn.client_conn.send_json([packets.ACK])
                 return
