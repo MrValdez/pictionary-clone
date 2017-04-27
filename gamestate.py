@@ -16,10 +16,9 @@ STAGE_SELECT_ANSWER = 2
 
 # Game constants
 STAGE_DRAWING_TIMER = 124 * 1000
-STAGE_DRAWING_TIMER = 5 * 1000
-#STAGE_DRAWING_TIMER = 15 * 1000
+#STAGE_DRAWING_TIMER = 5 * 1000
 
-TIME_BETWEEN_ROUNDS = 10 * 1000
+TIME_BETWEEN_ROUNDS = 5 * 1000
 GUESSER_TIME_PENALTY = 15 * 1000
 
 POINTS_GUESSER_CORRECT = 10
@@ -115,6 +114,7 @@ class GameState:
 
         self.conn.send_broadcast(self.id, packets.REQUEST_NEXT_STAGE, [])
 
+
 class Room(GameState):
     def __init__(self, network_conn):
         super(Room, self).__init__(network_conn)
@@ -146,14 +146,17 @@ class Room(GameState):
         self.time_remaining -= timer
         self.timer_to_next_round -= timer
 
-        if (self.activeDrawer and self.time_remaining < 0
-            and not self.start_transition_to_next_round):
+        if (self.activeDrawer and self.time_remaining < 0 and
+           not self.start_transition_to_next_round):
             # Penalty for active drawer for letting time run out
             self.activeDrawer.points += POINTS_DRAWER_TIMEOUT
 
-        if (self.time_remaining < 0 or
-           (self.start_transition_to_next_round and self.timer_to_next_round < 0)):
-           self.change_active_drawer()
+            # No winner
+            self.announce_winner(None)
+
+        if (self.start_transition_to_next_round and
+           self.timer_to_next_round < 0):
+            self.change_active_drawer()
 
         for player in self.players.values():
             player.timer -= timer

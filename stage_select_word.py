@@ -75,11 +75,14 @@ class SelectWord(Stage):
         if packet == packets.DRAW:
             player_id, mouse_down, mouse_pos = data
             self.view_pad.update(mouse_down, mouse_pos, use_screen_pos=False)
+        elif packet == packets.ANSWER_FOUND:
+            self.client.request_results()
 
     def update_server_commands(self, packet, data):
         if packet == packets.RESULTS:
             data = data[0]
             self.lockdown_timer = data["Time remaining"]
+            self.timer = data["Time remaining"]
             self.network_message = data["Message"]
             self.points = data["Current points"]
 
