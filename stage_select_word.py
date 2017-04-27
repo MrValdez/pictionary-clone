@@ -77,6 +77,8 @@ class SelectWord(Stage):
             self.view_pad.update(mouse_down, mouse_pos, use_screen_pos=False)
         elif packet == packets.ANSWER_FOUND:
             self.client.request_results()
+        elif packet == packets.TIME:
+            self.timer = data[0]
 
     def update_server_commands(self, packet, data):
         if packet == packets.RESULTS:
@@ -94,13 +96,18 @@ class SelectWord(Stage):
 
         messages.append(self.network_message)
 
-        total_seconds = self.timer / 1000
-        minutes = int(total_seconds / 60)
-        seconds = int(total_seconds % 60)
-        message = "Time left for drawer: {}:{:02d}".format(minutes, seconds)
-        messages.append(message)
+        if self.timer > 0:
+            total_seconds = self.timer / 1000
+            minutes = int(total_seconds / 60)
+            seconds = int(total_seconds % 60)
+            message = "Time left for drawer: "
+            if minutes:
+                message += "{}:{} minutes".format(minutes, seconds)
+            else:
+                message += "{} seconds".format(seconds)
 
-        if self.timer <= 0:
+            messages.append(message)
+        else:
             messages.append("Waiting for server...")
 
         self.messages = messages
@@ -119,8 +126,5 @@ class SelectWord(Stage):
         time = clock.get_time()
         self.timer -= time
         self.lockdown_timer -= time
-
-        if self.lockdown_timer <= 0:
-            self.network_message = ""
 
         self.update_messages()

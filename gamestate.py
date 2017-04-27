@@ -15,8 +15,8 @@ STAGE_DRAWING = 1
 STAGE_SELECT_ANSWER = 2
 
 # Game constants
-STAGE_DRAWING_TIMER = 124 * 1000
-STAGE_DRAWING_TIMER = 5 * 1000
+STAGE_DRAWING_TIMER = 45 * 1000
+#STAGE_DRAWING_TIMER = 5 * 1000
 
 TIME_BETWEEN_ROUNDS = 5 * 1000
 GUESSER_TIME_PENALTY = 15 * 1000
@@ -160,6 +160,10 @@ class Room(GameState):
 
         for player in self.players.values():
             player.timer -= timer
+
+        if self.time_remaining % 3 == 0:
+            # broadcast current time every 3 seconds
+            self.conn.send_broadcast(self.id, packets.TIME, [self.time_remaining])
 
     def update_network(self, packet, data):
         if packet == packets.CONNECT:

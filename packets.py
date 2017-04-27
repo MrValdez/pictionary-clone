@@ -15,6 +15,7 @@ GUESS_INFO          = 12
 REQUEST_RESULTS     = 13
 ANSWER_FOUND        = 14
 REQUEST_NEXT_STAGE  = 15
+TIME                = 16
 
 # Data structures for packets:
 
