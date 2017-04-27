@@ -22,6 +22,8 @@ class SelectWord(Stage):
         self.client = network_client
         self.timer = time_remaining
         self.wait_for_next_question = False
+        self.network_message = ""
+        self.lockdown_timer = 0
 
         self.buttons = []
         self.player_answers = choices
@@ -75,16 +77,33 @@ class SelectWord(Stage):
     def update_server_commands(self, packet, data):
         if packet == packets.RESULTS:
             data = data[0]
-            self.timer = data["Time remaining"]
-            self.messages = [data["Message"]]
+            self.lockdown_timer = data["Time remaining"]
+            self.network_message = data["Message"]
             self.points = data["Current points"]
 
     def _update_send_answer(self, answer_index):
         self.client.send_answer(answer_index)
 
+    def update_messages(self):
+        messages = []
+
+        messages.append(self.network_message)
+
+        total_seconds = self.timer / 1000
+        minutes = int(total_seconds / 60)
+        seconds = int(total_seconds % 60)
+        message = "Time left for drawer: {}:{:02d}".format(minutes, seconds)
+        messages.append(message)
+
+        if self.timer <= 0:
+            messages.append("Waiting for server...")
+
+        self.messages = messages
+
     def update(self, clock, prev_mouse_down, mouse_down, mouse_pos):
-        if not mouse_down[0] and prev_mouse_down[0]:
-            # left click up
+        if (self.lockdown_timer <= 0 and
+           (not mouse_down[0] and prev_mouse_down[0])):
+            # player does left_click_up and is not in lockdown
             for answer_index, button in enumerate(self.button_renders):
                 output, rect, pos = button
                 if rect.collidepoint(mouse_pos):
@@ -92,8 +111,11 @@ class SelectWord(Stage):
 
                     break
 
-        if self.wait_for_next_question:
-            self.current_timer_to_next_question -= clock.get_time()
+        time = clock.get_time()
+        self.timer -= time
+        self.lockdown_timer -= time
 
-            if self.current_timer_to_next_question <= 0:
-                self.wait_for_next_question = False
+        if self.lockdown_timer <= 0:
+            self.network_message = ""
+
+        self.update_messages()

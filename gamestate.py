@@ -21,6 +21,7 @@ STAGE_DRAWING_TIMER = (124 * 1000)
 #STAGE_DRAWING_TIMER = 15 * 1000
 
 TIME_BETWEEN_ROUNDS = 30 * 1000
+GUESSER_TIME_PENALTY = 15 * 1000
 
 POINTS_GUESSER_CORRECT = 10
 POINTS_GUESSER_WRONG = 1
@@ -45,6 +46,7 @@ class Player:
 
         self.status = PLAYER_STATUS_GUESSER
         self.points = 0
+        self.timer = 0
 
 
 class GameState:
@@ -120,9 +122,13 @@ class Room(GameState):
     def update(self):
         self.clock.tick()
 
-        self.time_remaining -= self.clock.get_time()
+        timer = self.clock.get_time()
+        self.time_remaining -= timer
         if self.time_remaining <= 0:
             self.change_active_drawer()
+
+        for player in self.players.values():
+            player.timer -= timer
 
     def change_active_drawer(self):
         pass
@@ -160,6 +166,12 @@ class Room(GameState):
             if player is None:
                 return
 
+            if player.timer > 0:
+                # player is under penalty time
+                # ignore their guess
+                self.conn.client_conn.send_json([packets.ACK])
+                return
+
             is_correct = question_idx == self.correct_answer_index
 
             to_send = packets.RESULTS_data.copy()
@@ -169,10 +181,21 @@ class Room(GameState):
                 to_send["Message"] = "You are correct"
             else:
                 player.points += POINTS_GUESSER_WRONG
-                to_send["Message"] = "You are wrong"
+                player.timer = GUESSER_TIME_PENALTY
+
+                total_seconds = player.timer / 1000
+                minutes = int(total_seconds / 60)
+                seconds = int(total_seconds % 60)
+
+                message = "You are wrong. You cannot answer for "
+                if minutes:
+                    message += "{}:{} minutes".format(minutes, seconds)
+                else:
+                    message += "{} seconds".format(seconds)
+                to_send["Message"] = message
 
             to_send["Current points"] = player.points
-            to_send["Time remaining"] = 50
+            to_send["Time remaining"] = GUESSER_TIME_PENALTY
             self.conn.client_conn.send_json([packets.RESULTS, to_send])
 
             if is_correct:
