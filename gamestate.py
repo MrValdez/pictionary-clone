@@ -16,7 +16,7 @@ STAGE_SELECT_ANSWER = 2
 
 # Game constants
 STAGE_DRAWING_TIMER = 45 * 1000
-#STAGE_DRAWING_TIMER = 5 * 1000
+#STAGE_DRAWING_TIMER = 6 * 1000
 
 TIME_BETWEEN_ROUNDS = 5 * 1000
 GUESSER_TIME_PENALTY = 15 * 1000
@@ -107,6 +107,7 @@ class GameState:
 
         for player in self.players.values():
             player.status = PLAYER_STATUS_GUESSER
+            player.history = []
 
         self.activeDrawer = random.choice(list(self.players.values()))
         self.activeDrawer.status = PLAYER_STATUS_DRAWER

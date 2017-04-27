@@ -44,7 +44,6 @@ class GameEngine:
             new_stage = stage_drawing.Drawing(self.client,
                                               drawing_answer, time_remaining,
                                               points)
-            new_stage.main_pad.clear()
             self.current_stage = new_stage
         elif packet == packets.GUESS_INFO:
             data = data[0]
@@ -57,7 +56,6 @@ class GameEngine:
                                                      time_remaining,
                                                      self.resolution,
                                                      points)
-            new_stage.view_pad.clear()
             self.current_stage = new_stage
 
     def update_broadcast_commands(self):
