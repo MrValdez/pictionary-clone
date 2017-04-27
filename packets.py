@@ -51,6 +51,7 @@ SEND_CORRECT_ANSWER_data = {
 RESULTS_data = {
     "Current points": 0,
     "Time remaining": 0,
+    "Next round timer": 0,
     "Message": "",
 }
 

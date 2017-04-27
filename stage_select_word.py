@@ -82,7 +82,7 @@ class SelectWord(Stage):
         if packet == packets.RESULTS:
             data = data[0]
             self.lockdown_timer = data["Time remaining"]
-            self.timer = data["Time remaining"]
+            self.timer = data["Next round timer"]
             self.network_message = data["Message"]
             self.points = data["Current points"]
 

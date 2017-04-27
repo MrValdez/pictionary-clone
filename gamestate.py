@@ -16,7 +16,7 @@ STAGE_SELECT_ANSWER = 2
 
 # Game constants
 STAGE_DRAWING_TIMER = 124 * 1000
-#STAGE_DRAWING_TIMER = 5 * 1000
+STAGE_DRAWING_TIMER = 5 * 1000
 
 TIME_BETWEEN_ROUNDS = 5 * 1000
 GUESSER_TIME_PENALTY = 15 * 1000
@@ -245,7 +245,7 @@ class Room(GameState):
 
             to_send = packets.RESULTS_data.copy()
             to_send["Current points"] = player.points
-            to_send["Time remaining"] = self.timer_to_next_round
+            to_send["Next round timer"] = self.timer_to_next_round
             to_send["Message"] = message
             self.conn.client_conn.send_json([packets.RESULTS, to_send])
 

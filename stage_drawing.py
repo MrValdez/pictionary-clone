@@ -61,7 +61,7 @@ class Drawing(Stage):
         if packet == packets.RESULTS:
             data = data[0]
             self.points = data["Current points"]
-            self.timer = data["Time remaining"]
+            self.timer = data["Next round timer"]
             self.network_message = data["Message"]
 
     def update(self, clock, prev_mouse_down, mouse_down, mouse_pos):
