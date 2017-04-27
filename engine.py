@@ -9,12 +9,12 @@ import stage_select_word
 
 class GameEngine:
     def __init__(self):
-        #self.player_name = input("What is your name? ")
-        self.player_name = "Brave sir Robin"
+        self.player_name = input("What is your name? ")
+        #self.player_name = "Brave sir Robin"
 
-        #server_address = input("IP address of server? ")
-        server_address = "localhost"
-        server_address = "shuny"
+        server_address = input("Hostname/IP address of server? ")
+        #server_address = "localhost"
+        #server_address = "shuny"
 
         self.client = network.client(self.player_name, server_address)
 
