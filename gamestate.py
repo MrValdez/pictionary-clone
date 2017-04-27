@@ -244,8 +244,11 @@ class Room(GameState):
                 return
 
             if self.winner_name:
-                win_quote = "{} got the correct answer! You get points!"
-                message = win_quote.format(self.winner_name)
+                win_quote = "{} got the correct answer!"
+                win_quote += "They got {} points! Drawer got {} points!"
+                message = win_quote.format(self.winner_name,
+                                           POINTS_GUESSER_CORRECT,
+                                           POINTS_DRAWER_CORRECTLY_GUESS)
             else:
                 message = "No one got the answer. The correct answer is: {}"
                 message = message.format(self.currentAnswer)
