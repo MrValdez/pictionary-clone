@@ -5,21 +5,20 @@ import pygame
 
 
 class Drawing(Stage):
-    def __init__(self, network_client):
+    def __init__(self, network_client, drawing_answer, time_remaining):
         super(Drawing, self).__init__()
 
         self.client = network_client
 
-        self.timer = 0
+        self.drawing_answer = drawing_answer
+        self.timer = time_remaining
 
         self.main_pad = pad([40, 40], network_connection=network_client)
-        self.spectator_pad = pad([100, 100], scale=2)
 
     def draw(self, screen):
         screen.fill([255, 255, 255])
 
         self.main_pad.draw(screen)
-        self.spectator_pad.draw(screen)
 
         self.draw_messages(screen, pos_y=600)
 
@@ -38,7 +37,7 @@ class Drawing(Stage):
         messages = []
 
         message = ("Your drawing should be: \"{}\""
-                   .format(self.client.drawing_answer))
+                   .format(self.drawing_answer))
         messages.append(message)
 
         total_seconds = self.timer / 1000
@@ -60,7 +59,6 @@ class Drawing(Stage):
             self.update_network_player_drawing_pad(data)
 
     def update_server_commands(self, packet, data):
-        print(packet, data)
         self.timer = data["Time remaining"]
         for history in enumerate(data["History"]):
             pad_id, draw_commands = history

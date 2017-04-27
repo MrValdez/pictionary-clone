@@ -37,10 +37,13 @@ class GameEngine:
 
     def transition_stage(self, packet, data):
         if packet == packets.DRAWING_INFO:
-            self.current_stage = stage_drawing.Drawing(self.client)
+            data = data[0]
+            drawing_answer = data["Drawing answer"]
+            time_remaining = data["Time remaining"]
+            
+            self.current_stage = stage_drawing.Drawing(self.client, drawing_answer, time_remaining)
         elif packet == packets.GUESS_INFO:
             self.current_stage = stage_select_word.SelectWord(self.client)
-        print("changed stage")
 
     def update_broadcast_commands(self):
         while True:
