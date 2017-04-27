@@ -14,7 +14,7 @@ DRAWING_INFO        = 11
 GUESS_INFO          = 12
 REQUEST_RESULTS     = 13
 ANSWER_FOUND        = 14
-
+REQUEST_NEXT_STAGE  = 15
 
 # Data structures for packets:
 
@@ -57,10 +57,12 @@ RESULTS_data = {
 DRAWING_INFO_data = {
     "Drawing answer": "42",
     "Time remaining": 9 * 1000,
+    "Player points": 0,
 }
 
 GUESS_INFO_data = {
     "Choices": [],
     "Drawing": [],
     "Time remaining": 9 * 1000,
+    "Player points": 0,
 }

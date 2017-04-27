@@ -5,7 +5,7 @@ import pygame
 
 
 class Drawing(Stage):
-    def __init__(self, network_client, drawing_answer, time_remaining):
+    def __init__(self, network_client, drawing_answer, time_remaining, points):
         super(Drawing, self).__init__()
 
         self.client = network_client
@@ -14,6 +14,7 @@ class Drawing(Stage):
         self.timer = time_remaining
         self.can_draw = True
         self.network_message = ""
+        self.points = points
 
         self.main_pad = pad([250, 40], network_connection=network_client)
 

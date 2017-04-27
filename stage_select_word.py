@@ -11,7 +11,8 @@ timer_to_next_question = 1000
 class SelectWord(Stage):
     def __init__(self,
                  network_client,
-                 drawing, choices, time_remaining, resolution):
+                 drawing, choices, time_remaining, resolution,
+                 points):
         super(SelectWord, self).__init__()
 
         self.view_pad = pad([10, 20])
@@ -24,6 +25,7 @@ class SelectWord(Stage):
         self.wait_for_next_question = False
         self.network_message = ""
         self.lockdown_timer = 0
+        self.points = points
 
         self.buttons = []
         self.player_answers = choices

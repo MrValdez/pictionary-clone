@@ -15,12 +15,11 @@ STAGE_DRAWING = 1
 STAGE_SELECT_ANSWER = 2
 
 # Game constants
-STAGE_DRAWING_TIMER = 60 * 1000
-STAGE_DRAWING_TIMER = (124 * 1000)
-#STAGE_DRAWING_TIMER = 1 * 1000
+STAGE_DRAWING_TIMER = 124 * 1000
+STAGE_DRAWING_TIMER = 5 * 1000
 #STAGE_DRAWING_TIMER = 15 * 1000
 
-TIME_BETWEEN_ROUNDS = 30 * 1000
+TIME_BETWEEN_ROUNDS = 10 * 1000
 GUESSER_TIME_PENALTY = 15 * 1000
 
 POINTS_GUESSER_CORRECT = 10
@@ -54,14 +53,15 @@ class GameState:
         self.current_stage = STAGE_DRAWING
         self.players = {}
         self.activeDrawer = None
-        self.currentAnswer = random.choice(possible_drawings)
+        self.currentAnswer = ""
         self.choices = []
         self.number_of_choices = 15
         self.correct_answer_index = 0
-        self.generate_choices()
 
         self.clock = pygame.time.Clock()
         self.conn = network_conn
+        self.timer_to_next_round = 0
+        self.start_transition_to_next_round = False
 
     def addPlayer(self, name):
         newPlayer = Player(name)
@@ -71,8 +71,7 @@ class GameState:
                                                         newPlayer.id))
 
         if self.activeDrawer is None:
-            self.activeDrawer = newPlayer
-            newPlayer.status = PLAYER_STATUS_DRAWER
+            self.change_active_drawer(broadcast_to_network=False)
 
         return newPlayer
 
@@ -83,6 +82,8 @@ class GameState:
         return None
 
     def generate_choices(self):
+        self.currentAnswer = random.choice(possible_drawings)
+
         wrong_answers = list(possible_drawings)
         wrong_answers.remove(self.currentAnswer)
         wrong_answers = random.sample(wrong_answers, self.number_of_choices)
@@ -94,14 +95,32 @@ class GameState:
 
         print("Current drawing should be: {}".format(self.currentAnswer))
 
+    def change_active_drawer(self, broadcast_to_network=True):
+        if not len(self.players):
+            # no players in room
+            return
+
+        print("\nStarting next round")
+
+        self.generate_choices()
+        self.time_remaining = STAGE_DRAWING_TIMER
+        self.start_transition_to_next_round = False
+
+        for player in self.players.values():
+            player.status = PLAYER_STATUS_GUESSER
+
+        self.activeDrawer = random.choice(list(self.players.values()))
+        self.activeDrawer.status = PLAYER_STATUS_DRAWER
+        print("Next drawer is " + self.activeDrawer.name)
+
+        self.conn.send_broadcast(self.id, packets.REQUEST_NEXT_STAGE, [])
 
 class Room(GameState):
     def __init__(self, network_conn):
         super(Room, self).__init__(network_conn)
         self.id = 1
-        self.time_remaining = STAGE_DRAWING_TIMER
+        self.time_remaining = 0
         self.all_correct_answers = []
-        self.active_drawing_player = 0
         self.winner_name = ""
 
     def update_history(self, player_id, mouse_down, pos):
@@ -123,15 +142,21 @@ class Room(GameState):
         self.clock.tick()
 
         timer = self.clock.get_time()
+
         self.time_remaining -= timer
-        if self.time_remaining <= 0:
-            self.change_active_drawer()
+        self.timer_to_next_round -= timer
+
+        if (self.activeDrawer and self.time_remaining < 0
+            and not self.start_transition_to_next_round):
+            # Penalty for active drawer for letting time run out
+            self.activeDrawer.points += POINTS_DRAWER_TIMEOUT
+
+        if (self.time_remaining < 0 or
+           (self.start_transition_to_next_round and self.timer_to_next_round < 0)):
+           self.change_active_drawer()
 
         for player in self.players.values():
             player.timer -= timer
-
-    def change_active_drawer(self):
-        pass
 
     def update_network(self, packet, data):
         if packet == packets.CONNECT:
@@ -150,7 +175,8 @@ class Room(GameState):
 
         elif packet == packets.ACK_CONNECT:
             print("Sending stage info")
-            self.send_player_stage_info(data)
+            player_id = data[0]
+            self.send_player_stage_info(player_id)
 
         elif packet == packets.DRAW:
             self.conn.client_conn.send_json(packets.ACK)
@@ -199,8 +225,7 @@ class Room(GameState):
             self.conn.client_conn.send_json([packets.RESULTS, to_send])
 
             if is_correct:
-                self.winner_name = player.name
-                self.conn.send_broadcast(self.id, packets.ANSWER_FOUND, [])
+                self.announce_winner(player)
 
         elif packet == packets.REQUEST_RESULTS:
             playerID = data[0]
@@ -208,15 +233,20 @@ class Room(GameState):
             if player is None:
                 return
 
+            if self.winner_name:
+                win_quote = "{} got the correct answer! You get points!"
+                message = win_quote.format(self.winner_name)
+            else:
+                message = "No one got the answer. The correct answer is: {}"
+                message = message.format(self.currentAnswer)
+
             to_send = packets.RESULTS_data.copy()
             to_send["Current points"] = player.points
-            to_send["Time remaining"] = 50
-            win_quote = "{} got the correct answer! You get points!"
-            to_send["Message"] = win_quote.format(self.winner_name)
+            to_send["Time remaining"] = self.timer_to_next_round
+            to_send["Message"] = message
             self.conn.client_conn.send_json([packets.RESULTS, to_send])
 
-    def send_player_stage_info(self, data):
-        player_id = data[0]
+    def send_player_stage_info(self, player_id):
         player = self.getPlayer(player_id)
 
         # figure out if player is guesser or drawer.
@@ -231,5 +261,17 @@ class Room(GameState):
             data["Choices"] = self.choices
             data["Drawing"] = self.activeDrawer.history
 
+        data["Player points"] = player.points
         data["Time remaining"] = self.time_remaining
         self.conn.client_conn.send_json([packet_id, data])
+
+    def announce_winner(self, player):
+        if player:
+            self.winner_name = player.name
+        else:
+            self.winner_name = None
+
+        self.conn.send_broadcast(self.id, packets.ANSWER_FOUND, [])
+
+        self.timer_to_next_round = TIME_BETWEEN_ROUNDS
+        self.start_transition_to_next_round = True

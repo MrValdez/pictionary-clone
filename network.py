@@ -37,7 +37,7 @@ class client:
         self.player_number = current_game_state["Player number"]
         self.drawing_answer = current_game_state["Drawing answer"]
 
-        self.send(packets.ACK_CONNECT, [self.id])
+        self.send_request_for_stage_info()
 
     def _update_network_commands(self, socket, poller, recv_handler):
         socks = dict(poller.poll(10))
@@ -63,6 +63,9 @@ class client:
         return self._update_network_commands(self.server,
                                              self.server_poller,
                                              recv_json)
+
+    def send_request_for_stage_info(self):
+        self.send(packets.ACK_CONNECT, [self.id])
 
     def send_draw_command(self, mouse_down, position):
         data = [mouse_down, position]

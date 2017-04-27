@@ -39,19 +39,22 @@ class GameEngine:
             data = data[0]
             drawing_answer = data["Drawing answer"]
             time_remaining = data["Time remaining"]
-
+            points = data["Player points"]
             new_stage = stage_drawing.Drawing(self.client,
-                                              drawing_answer, time_remaining)
+                                              drawing_answer, time_remaining,
+                                              points)
             self.current_stage = new_stage
         elif packet == packets.GUESS_INFO:
             data = data[0]
             drawing = data["Drawing"]
             choices = data["Choices"]
             time_remaining = data["Time remaining"]
+            points = data["Player points"]
             new_stage = stage_select_word.SelectWord(self.client,
                                                      drawing, choices,
                                                      time_remaining,
-                                                     self.resolution)
+                                                     self.resolution,
+                                                     points)
             self.current_stage = new_stage
 
     def update_broadcast_commands(self):
@@ -62,10 +65,8 @@ class GameEngine:
 
             packet, data = network_data[0], network_data[1:]
 
-            if packet == packets.SELECT_ANSWER_INFO:
-                # transition to next stage
-                self.current_stage = stage_select_word.SelectWord(self.client)
-                self.current_stage.update_select_answer_stage(data)
+            if packet == packets.REQUEST_NEXT_STAGE:
+                self.client.send_request_for_stage_info()
             else:
                 self.current_stage.update_broadcast_commands(packet, data)
 
