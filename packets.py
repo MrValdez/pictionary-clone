@@ -12,6 +12,8 @@ SEND_CORRECT_ANSWER = 9
 RESULTS             = 10
 DRAWING_INFO        = 11
 GUESS_INFO          = 12
+REQUEST_RESULTS     = 13
+ANSWER_FOUND        = 14
 
 
 # Data structures for packets:
@@ -61,5 +63,4 @@ GUESS_INFO_data = {
     "Choices": [],
     "Drawing": [],
     "Time remaining": 9 * 1000,
-    
 }

@@ -7,8 +7,8 @@ broadcast_port = 668
 
 
 class client:
-    def __init__(self, player_name):
-        addr = "tcp://localhost:"
+    def __init__(self, player_name, server_address):
+        addr = "tcp://{}:".format(server_address)
 
         context = zmq.Context()
         broadcast = context.socket(zmq.SUB)
@@ -30,7 +30,7 @@ class client:
         self.client_poller = client_poller
         self.server_poller = server_poller
 
-        server.send_json([packets.CONNECT, [player_name]])
+        server.send_json([packets.CONNECT, player_name])
 
         current_game_state = server.recv_json()
         self.id = current_game_state["Player ID"]
@@ -71,6 +71,9 @@ class client:
     def send_answer(self, answer_index):
         data = answer_index
         self.send(packets.SEND_ANSWER, data)
+
+    def request_results(self):
+        self.send(packets.REQUEST_RESULTS, [])
 
     def send(self, packet_type, data):
         self.server.send_json([packet_type, self.id, data])

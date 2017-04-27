@@ -20,6 +20,13 @@ STAGE_DRAWING_TIMER = (124 * 1000)
 #STAGE_DRAWING_TIMER = 1 * 1000
 #STAGE_DRAWING_TIMER = 15 * 1000
 
+TIME_BETWEEN_ROUNDS = 30 * 1000
+
+POINTS_GUESSER_CORRECT = 10
+POINTS_GUESSER_WRONG = 1
+POINTS_DRAWER_CORRECTLY_GUESS = 30
+POINTS_DRAWER_TIMEOUT = -20
+
 possible_drawings = [answer
                      for answer in open("answers.txt").read().split("\n")
                      if len(answer) > 2]
@@ -84,8 +91,6 @@ class GameState:
         self.choices = choices
 
         print("Current drawing should be: {}".format(self.currentAnswer))
-        print("Choices are: {}".format(self.choices))
-        print(self.correct_answer_index)
 
 
 class Room(GameState):
@@ -95,6 +100,7 @@ class Room(GameState):
         self.time_remaining = STAGE_DRAWING_TIMER
         self.all_correct_answers = []
         self.active_drawing_player = 0
+        self.winner_name = ""
 
     def update_history(self, player_id, mouse_down, pos):
         if player_id not in self.players:
@@ -158,14 +164,32 @@ class Room(GameState):
 
             to_send = packets.RESULTS_data.copy()
             if is_correct:
-                player.points += 10
+                player.points += POINTS_GUESSER_CORRECT
+                self.activeDrawer.points += POINTS_DRAWER_CORRECTLY_GUESS
                 to_send["Message"] = "You are correct"
             else:
-                player.points -= 10
-                to_send["Message"] = "You are wrong. You get penalty."
+                player.points += POINTS_GUESSER_WRONG
+                to_send["Message"] = "You are wrong"
 
             to_send["Current points"] = player.points
             to_send["Time remaining"] = 50
+            self.conn.client_conn.send_json([packets.RESULTS, to_send])
+
+            if is_correct:
+                self.winner_name = player.name
+                self.conn.send_broadcast(self.id, packets.ANSWER_FOUND, [])
+
+        elif packet == packets.REQUEST_RESULTS:
+            playerID = data[0]
+            player = self.getPlayer(playerID)
+            if player is None:
+                return
+
+            to_send = packets.RESULTS_data.copy()
+            to_send["Current points"] = player.points
+            to_send["Time remaining"] = 50
+            win_quote = "{} got the correct answer! You get points!"
+            to_send["Message"] = win_quote.format(self.winner_name)
             self.conn.client_conn.send_json([packets.RESULTS, to_send])
 
     def send_player_stage_info(self, data):

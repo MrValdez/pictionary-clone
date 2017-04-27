@@ -6,6 +6,9 @@ class Stage:
         self.NormalText = pygame.font.Font(None, 25)
         self.messages = []
 
+        self.points = 0
+        self.ui_points_pos = [30, 20]
+
     def draw(self, screen):
         pass
 
@@ -23,3 +26,12 @@ class Stage:
             output = self.NormalText.render(message, True, [0, 0, 0])
             screen.blit(output, [40, pos_y])
             pos_y += output.get_height() + 10
+
+        points_text = self.NormalText.render(str(self.points), True, [0, 0, 0])
+        pygame.draw.circle(screen,
+                           [255, 128, 128],
+                           self.ui_points_pos,
+                           points_text.get_width() + 10)
+        points_pos = points_text.get_rect()
+        points_pos.center = self.ui_points_pos
+        screen.blit(points_text,  points_pos)

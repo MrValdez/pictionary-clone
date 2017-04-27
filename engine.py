@@ -9,11 +9,15 @@ import stage_select_word
 
 class GameEngine:
     def __init__(self):
-        os.environ["SDL_VIDEO_CENTERED"] = "1"
-
         #self.player_name = input("What is your name? ")
         self.player_name = "Brave sir Robin"
 
+        #server_address = input("IP address of server? ")
+        server_address = "localhost"
+
+        self.client = network.client(self.player_name, server_address)
+
+        os.environ["SDL_VIDEO_CENTERED"] = "1"
         pygame.init()
         pygame.font.init()
 
@@ -22,13 +26,8 @@ class GameEngine:
         pygame.display.set_caption("Pictionary clone")
         self.clock = pygame.time.Clock()
 
-        self._connect_to_server()
-
         self.current_stage = stage_base.Stage()     # blank stage
         self.prev_mouse_down = pygame.mouse.get_pressed()
-
-    def _connect_to_server(self):
-        self.client = network.client(self.player_name)
 
     def draw(self):
         self.current_stage.draw(self.screen)
@@ -40,16 +39,20 @@ class GameEngine:
             data = data[0]
             drawing_answer = data["Drawing answer"]
             time_remaining = data["Time remaining"]
-            
-            self.current_stage = stage_drawing.Drawing(self.client, drawing_answer, time_remaining)
+
+            new_stage = stage_drawing.Drawing(self.client,
+                                              drawing_answer, time_remaining)
+            self.current_stage = new_stage
         elif packet == packets.GUESS_INFO:
             data = data[0]
             drawing = data["Drawing"]
             choices = data["Choices"]
             time_remaining = data["Time remaining"]
-            self.current_stage = stage_select_word.SelectWord(self.client,
-                                                              drawing, choices, time_remaining,
-                                                              self.resolution)
+            new_stage = stage_select_word.SelectWord(self.client,
+                                                     drawing, choices,
+                                                     time_remaining,
+                                                     self.resolution)
+            self.current_stage = new_stage
 
     def update_broadcast_commands(self):
         while True:
