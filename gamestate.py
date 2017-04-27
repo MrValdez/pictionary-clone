@@ -19,7 +19,7 @@ STAGE_DRAWING_TIMER = 45 * 1000
 #STAGE_DRAWING_TIMER = 6 * 1000
 
 TIME_BETWEEN_ROUNDS = 5 * 1000
-GUESSER_TIME_PENALTY = 15 * 1000
+GUESSER_TIME_PENALTY = 7 * 1000
 
 POINTS_GUESSER_CORRECT = 10
 POINTS_GUESSER_WRONG = 1
@@ -228,10 +228,10 @@ class Room(GameState):
                     message += "{}:{} minutes".format(minutes, seconds)
                 else:
                     message += "{} seconds".format(seconds)
+                to_send["Time remaining"] = GUESSER_TIME_PENALTY
                 to_send["Message"] = message
 
             to_send["Current points"] = player.points
-            to_send["Time remaining"] = GUESSER_TIME_PENALTY
             self.conn.client_conn.send_json([packets.RESULTS, to_send])
 
             if is_correct:

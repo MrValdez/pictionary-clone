@@ -25,6 +25,7 @@ class SelectWord(Stage):
         self.wait_for_next_question = False
         self.network_message = ""
         self.lockdown_timer = 0
+        self.is_in_lockdown = False
         self.points = points
 
         self.buttons = []
@@ -84,6 +85,8 @@ class SelectWord(Stage):
         if packet == packets.RESULTS:
             data = data[0]
             self.lockdown_timer = data["Time remaining"]
+            if self.lockdown_timer:
+                self.is_in_lockdown = True
             self.timer = data["Next round timer"]
             self.network_message = data["Message"]
             self.points = data["Current points"]
@@ -126,5 +129,8 @@ class SelectWord(Stage):
         time = clock.get_time()
         self.timer -= time
         self.lockdown_timer -= time
+        if self.is_in_lockdown and self.lockdown_timer < 0:
+            self.is_in_lockdown = False
+            self.network_message = ""
 
         self.update_messages()
