@@ -4,86 +4,76 @@ import packets
 import pygame
 
 button_back_color = [255, 128, 255]
-button_width = 100
+button_width = 50
 timer_to_next_question = 1000
 
 
 class SelectWord(Stage):
-    def __init__(self, network_client):
+    def __init__(self, network_client, drawing, choices, time_remaining, resolution):
         super(SelectWord, self).__init__()
 
-        self.main_pad = pad([220, 40], scale=1.05)
+        self.view_pad = pad([10, 20])
+        for draw_command in drawing:
+            mouse_down, pos = draw_command
+            self.view_pad.update(mouse_down, pos, use_screen_pos=False)
 
         self.client = network_client
-        self.player_answers = []
-        self.current_player_to_test = 0
+        self.current_timer_to_next_question = time_remaining
         self.wait_for_next_question = False
-        self.current_timer_to_next_question = 0
 
-        col1 = 50
-        col2 = 750
-        row1 = 200
-        row2 = 500
-
-        self.buttons = [[col1, row1],
-                        [col2, row1],
-                        [col1, row2],
-                        [col2, row2]]
-        self.button_renders = []
+        self.buttons = []
+        self.player_answers = choices
+        self.generate_buttons(start_pos = [600, 30], max_width = resolution[0])
 
     def draw(self, screen):
         screen.fill([255, 255, 255])
 
-        self.main_pad.draw(screen)
+        self.view_pad.draw(screen)
         self.draw_answers(screen)
 
         self.draw_messages(screen, pos_y=600)
 
     def draw_answers(self, screen):
-        if self.current_player_to_test >= len(self.player_answers):
-            return
-
         for output, rect, pos in self.button_renders:
             pygame.draw.rect(screen,
                              button_back_color,
                              rect)
             screen.blit(output, pos)
 
-        commands = self.player_answers[self.current_player_to_test][1]
-        for draw_command in commands:
-            mouse_down, pos = draw_command
-            self.main_pad.update(mouse_down, pos, use_screen_pos=False)
-
-    def generate_buttons(self):
+    def generate_buttons(self, start_pos, max_width, padding= 10):
         self.button_renders = []
 
-        answers = self.player_answers[self.current_player_to_test][0]
-        for pos, answer in zip(self.buttons, answers):
+        answers = self.player_answers
+        current_x, current_y = start_pos
+        max_height = 0
+        for answer in self.player_answers:
             output = self.NormalText.render(answer, True, [0, 0, 0])
+            pos = [current_x, current_y]
             rect = (output.get_rect()
-                    .move(*pos).inflate(button_width, button_width))
+                    .move(*pos)
+                    .inflate(button_width, button_width / 2))
+            max_height = max(max_height, rect.height + padding)
+
+            if rect.right >= max_width:
+                current_x = start_pos[0]
+                current_y += max_height
+                rect.move_ip(-pos[0], -pos[1])
+                rect.move_ip(current_x, current_y)
+                pos = [current_x, current_y]
+                max_height = 0
+
             self.button_renders.append([output, rect, pos])
-
-    def update_select_answer_stage(self, data):
-        while data is None:
-            # wait for the next broadcast
-            data = self.client.update_client_commands()
-
-        self.player_answers = data
-        self.switch_player_to_test()
-
-    def switch_player_to_test(self):
-        self.current_player_to_test = (
-            (self.current_player_to_test + 1) % len(self.player_answers))
-
-        self.messages = []
-        self.main_pad.clear()
-        self.generate_buttons()
+            current_x += rect.width + padding
 
     def update_broadcast_commands(self, packet, data):
-        pass
+        print(packet, data)
+        print(packets.DRAW)
+        if packet == packets.DRAW:
+            player_id, mouse_down, mouse_pos = data
+            self.view_pad.update(mouse_down, mouse_pos, use_screen_pos=False)
 
     def update_server_commands(self, packet, data):
+        print(packet, data)
         correct_answer = data["Correct Answer"]
         self.messages = ["The correct answer is \"{}\"".format(correct_answer)]
 

@@ -45,6 +45,11 @@ class GameState:
         self.current_stage = STAGE_DRAWING
         self.players = {}
         self.activeDrawer = None
+        self.currentAnswer = random.choice(possible_drawings)
+        self.choices = []
+        self.number_of_choices = 15
+        self.generate_choices()
+
         self.clock = pygame.time.Clock()
         self.conn = network_conn
 
@@ -70,6 +75,16 @@ class GameState:
 
     def change_stage(self, newStage):
         self.current_stage = newStage
+
+    def generate_choices(self):
+        wrong_answers = list(possible_drawings)
+        wrong_answers.remove(self.currentAnswer)
+        wrong_answers = random.sample(wrong_answers, self.number_of_choices)
+        choices = wrong_answers + [self.currentAnswer]
+        random.shuffle(choices)
+
+        self.choices = choices
+
 
 class Room(GameState):
     def __init__(self, network_conn):
@@ -184,7 +199,7 @@ class Room(GameState):
         elif player.status == PLAYER_STATUS_GUESSER:
             packet_id = packets.GUESS_INFO
             data = packets.GUESS_INFO_data.copy()
-            data["Choices"] = ["a", "b"]
+            data["Choices"] = self.choices
             data["Drawing"] = self.activeDrawer.history
 
         data["Time remaining"] = self.time_remaining

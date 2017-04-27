@@ -43,7 +43,13 @@ class GameEngine:
             
             self.current_stage = stage_drawing.Drawing(self.client, drawing_answer, time_remaining)
         elif packet == packets.GUESS_INFO:
-            self.current_stage = stage_select_word.SelectWord(self.client)
+            data = data[0]
+            drawing = data["Drawing"]
+            choices = data["Choices"]
+            time_remaining = data["Time remaining"]
+            self.current_stage = stage_select_word.SelectWord(self.client,
+                                                              drawing, choices, time_remaining,
+                                                              self.resolution)
 
     def update_broadcast_commands(self):
         while True:
