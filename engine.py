@@ -2,6 +2,7 @@ import os
 import packets
 import pygame
 import network
+import stage_base
 import stage_drawing
 import stage_select_word
 
@@ -23,7 +24,7 @@ class GameEngine:
 
         self._connect_to_server()
 
-        self.current_stage = stage_drawing.Drawing(self.client)
+        self.current_stage = stage_base.Stage()     # blank stage
         self.prev_mouse_down = pygame.mouse.get_pressed()
 
     def _connect_to_server(self):
@@ -35,11 +36,11 @@ class GameEngine:
         pygame.display.update()
 
     def transition_stage(self, packet, data):
-        print("transitioning to:")
-        print(packet)
-        print("Data:")
-        print(data)
-        print("")
+        if packet == packets.DRAWING_INFO:
+            self.current_stage = stage_drawing.Drawing(self.client)
+        elif packet == packets.GUESS_INFO:
+            self.current_stage = stage_select_word.SelectWord(self.client)
+        print("changed stage")
 
     def update_broadcast_commands(self):
         while True:

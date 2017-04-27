@@ -36,7 +36,7 @@ class Player:
         self.number = Player.current_player_number
         Player.current_player_number += 1
 
-        self.status = PLAYER_STATUS_DRAWER
+        self.status = PLAYER_STATUS_GUESSER
         self.drawing_answer = random.choice(possible_drawings)
 
 
@@ -44,6 +44,7 @@ class GameState:
     def __init__(self, network_conn):
         self.current_stage = STAGE_DRAWING
         self.players = {}
+        self.activeDrawer = None
         self.clock = pygame.time.Clock()
         self.conn = network_conn
 
@@ -54,6 +55,11 @@ class GameState:
         print("Added new player ({}) with id {}".format(newPlayer.name,
                                                         newPlayer.id))
         print(" their drawing should be: {}".format(newPlayer.drawing_answer))
+
+        if self.activeDrawer is None:
+            self.activeDrawer = newPlayer
+            newPlayer.status = PLAYER_STATUS_DRAWER
+
         return newPlayer
 
     def getPlayer(self, id):
@@ -147,15 +153,17 @@ class Room(GameState):
             self.conn.client_conn.send_json(data)
 
         if packet == packets.ACK_CONNECT:
+            print("Sending stage info")
             self.send_player_stage_info(data)
-        if packet == packets.DRAW:
+
+        elif packet == packets.DRAW:
             self.conn.client_conn.send_json(packets.ACK)
 
             player_id = data[0]
             mouse_down, pos = data[1]
             self.update_history(player_id, mouse_down, pos)
 
-        if packet == packets.SEND_ANSWER:
+        elif packet == packets.SEND_ANSWER:
             playerID = data[0]
             question_idx, player_choice = data[1]
 
@@ -177,7 +185,7 @@ class Room(GameState):
             packet_id = packets.GUESS_INFO
             data = packets.GUESS_INFO_data.copy()
             data["Choices"] = ["a", "b"]
-            data["Drawing"] = activePlayer.history
+            data["Drawing"] = self.activeDrawer.history
 
         data["Time remaining"] = self.time_remaining
         self.conn.client_conn.send_json([packet_id, data])
