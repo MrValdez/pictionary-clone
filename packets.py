@@ -47,7 +47,7 @@ SEND_CORRECT_ANSWER_data = {
 }
 
 RESULTS_data = {
-    "Points delta": 0,
+    "Current points": 0,
     "Time remaining": 0,
     "Message": "",
 }

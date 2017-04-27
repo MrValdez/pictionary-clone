@@ -37,7 +37,7 @@ class Player:
         Player.current_player_number += 1
 
         self.status = PLAYER_STATUS_GUESSER
-        self.drawing_answer = random.choice(possible_drawings)
+        self.points = 0
 
 
 class GameState:
@@ -48,6 +48,7 @@ class GameState:
         self.currentAnswer = random.choice(possible_drawings)
         self.choices = []
         self.number_of_choices = 15
+        self.correct_answer_index = 0
         self.generate_choices()
 
         self.clock = pygame.time.Clock()
@@ -59,7 +60,6 @@ class GameState:
 
         print("Added new player ({}) with id {}".format(newPlayer.name,
                                                         newPlayer.id))
-        print(" their drawing should be: {}".format(newPlayer.drawing_answer))
 
         if self.activeDrawer is None:
             self.activeDrawer = newPlayer
@@ -73,9 +73,6 @@ class GameState:
                 return player
         return None
 
-    def change_stage(self, newStage):
-        self.current_stage = newStage
-
     def generate_choices(self):
         wrong_answers = list(possible_drawings)
         wrong_answers.remove(self.currentAnswer)
@@ -83,7 +80,12 @@ class GameState:
         choices = wrong_answers + [self.currentAnswer]
         random.shuffle(choices)
 
+        self.correct_answer_index = choices.index(self.currentAnswer)
         self.choices = choices
+
+        print("Current drawing should be: {}".format(self.currentAnswer))
+        print("Choices are: {}".format(self.choices))
+        print(self.correct_answer_index)
 
 
 class Room(GameState):
@@ -109,48 +111,15 @@ class Room(GameState):
         data = [player.number, *history_data]
         self.conn.send_broadcast(self.id, packets.DRAW, data)
 
-    def change_stage(self, newStage):
-        if (self.current_stage == STAGE_DRAWING and
-           newStage == STAGE_SELECT_ANSWER):
-            # transitioning from stage_drawing to stage_select_answer
-            self.broadcast_change_to_stage_select_answer()
-        else:
-            # there is no stage transition. do not call super
-            return
-
-        super(Room, self).change_stage(newStage)
-
-    def broadcast_change_to_stage_select_answer(self):
-        players = OrderedDict(self.players).values()    # force consistency
-
-        all_choices = []
-        all_drawings = []
-        all_correct_answers = []
-
-        for player in players:
-            wrong_answers = list(possible_drawings)
-            wrong_answers.remove(player.drawing_answer)
-            wrong_answers = random.sample(wrong_answers, 3)
-            choices = wrong_answers + [player.drawing_answer]
-            random.shuffle(choices)
-
-            all_choices.append(choices)
-            all_drawings.append(player.history)
-            all_correct_answers.append(player.drawing_answer)
-
-        data = zip(all_choices, all_drawings)
-
-        self.conn.send_broadcast(self.id,
-                                   packets.SELECT_ANSWER_INFO,
-                                   data)
-        self.all_correct_answers = all_correct_answers
-
     def update(self):
         self.clock.tick()
 
         self.time_remaining -= self.clock.get_time()
         if self.time_remaining <= 0:
-            self.change_stage(STAGE_SELECT_ANSWER)
+            self.change_active_drawer()
+
+    def change_active_drawer(self):
+        pass
 
     def update_network(self, packet, data):
         if packet == packets.CONNECT:
@@ -163,11 +132,11 @@ class Room(GameState):
             data["Player number"] = newPlayer.number
             data["Player name"] = newPlayer.name
             data["Player ID"] = newPlayer.id
-            data["Drawing answer"] = newPlayer.drawing_answer
+            data["Drawing answer"] = self.currentAnswer
 
             self.conn.client_conn.send_json(data)
 
-        if packet == packets.ACK_CONNECT:
+        elif packet == packets.ACK_CONNECT:
             print("Sending stage info")
             self.send_player_stage_info(data)
 
@@ -180,11 +149,24 @@ class Room(GameState):
 
         elif packet == packets.SEND_ANSWER:
             playerID = data[0]
-            question_idx, player_choice = data[1]
+            question_idx = data[1]
+            player = self.getPlayer(playerID)
+            if player is None:
+                return
 
-            to_send = packets.SEND_CORRECT_ANSWER_data.copy()
-            to_send["Correct Answer"] = self.all_correct_answers[question_idx]
-            self.conn.client_conn.send_json(to_send)
+            is_correct = question_idx == self.correct_answer_index
+
+            to_send = packets.RESULTS_data.copy()
+            if is_correct:
+                player.points += 10
+                to_send["Message"] = "You are correct"
+            else:
+                player.points -= 10
+                to_send["Message"] = "You are wrong. You get penalty."
+
+            to_send["Current points"] = player.points
+            to_send["Time remaining"] = 50
+            self.conn.client_conn.send_json([packets.RESULTS, to_send])
 
     def send_player_stage_info(self, data):
         player_id = data[0]
@@ -194,7 +176,7 @@ class Room(GameState):
         if player.status == PLAYER_STATUS_DRAWER:
             packet_id = packets.DRAWING_INFO
             data = packets.DRAWING_INFO_data.copy()
-            data["Drawing answer"] = player.drawing_answer
+            data["Drawing answer"] = self.currentAnswer
 
         elif player.status == PLAYER_STATUS_GUESSER:
             packet_id = packets.GUESS_INFO

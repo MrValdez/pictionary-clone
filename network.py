@@ -68,8 +68,8 @@ class client:
         data = [mouse_down, position]
         self.send(packets.DRAW, data)
 
-    def send_answer(self, answer_index, current_player_to_test):
-        data = [current_player_to_test, answer_index]
+    def send_answer(self, answer_index):
+        data = answer_index
         self.send(packets.SEND_ANSWER, data)
 
     def send(self, packet_type, data):

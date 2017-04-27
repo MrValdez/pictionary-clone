@@ -9,7 +9,9 @@ timer_to_next_question = 1000
 
 
 class SelectWord(Stage):
-    def __init__(self, network_client, drawing, choices, time_remaining, resolution):
+    def __init__(self,
+                 network_client,
+                 drawing, choices, time_remaining, resolution):
         super(SelectWord, self).__init__()
 
         self.view_pad = pad([10, 20])
@@ -18,12 +20,12 @@ class SelectWord(Stage):
             self.view_pad.update(mouse_down, pos, use_screen_pos=False)
 
         self.client = network_client
-        self.current_timer_to_next_question = time_remaining
+        self.timer = time_remaining
         self.wait_for_next_question = False
 
         self.buttons = []
         self.player_answers = choices
-        self.generate_buttons(start_pos = [600, 30], max_width = resolution[0])
+        self.generate_buttons(start_pos=[600, 30], max_width=resolution[0])
 
     def draw(self, screen):
         screen.fill([255, 255, 255])
@@ -40,7 +42,7 @@ class SelectWord(Stage):
                              rect)
             screen.blit(output, pos)
 
-    def generate_buttons(self, start_pos, max_width, padding= 10):
+    def generate_buttons(self, start_pos, max_width, padding=10):
         self.button_renders = []
 
         answers = self.player_answers
@@ -66,23 +68,19 @@ class SelectWord(Stage):
             current_x += rect.width + padding
 
     def update_broadcast_commands(self, packet, data):
-        print(packet, data)
-        print(packets.DRAW)
         if packet == packets.DRAW:
             player_id, mouse_down, mouse_pos = data
             self.view_pad.update(mouse_down, mouse_pos, use_screen_pos=False)
 
     def update_server_commands(self, packet, data):
-        print(packet, data)
-        correct_answer = data["Correct Answer"]
-        self.messages = ["The correct answer is \"{}\"".format(correct_answer)]
+        if packet == packets.RESULTS:
+            data = data[0]
+            self.timer = data["Time remaining"]
+            self.messages = [data["Message"]]
+            self.points = data["Current points"]
 
     def _update_send_answer(self, answer_index):
-        self.client.send_answer(answer_index,
-                                self.current_player_to_test)
-
-        self.wait_for_next_question = True
-        self.current_timer_to_next_question = timer_to_next_question
+        self.client.send_answer(answer_index)
 
     def update(self, clock, prev_mouse_down, mouse_down, mouse_pos):
         if not mouse_down[0] and prev_mouse_down[0]:
@@ -99,4 +97,3 @@ class SelectWord(Stage):
 
             if self.current_timer_to_next_question <= 0:
                 self.wait_for_next_question = False
-                self.switch_player_to_test()
