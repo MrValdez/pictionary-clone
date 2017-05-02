@@ -4,99 +4,121 @@ import packets
 import pygame
 
 button_back_color = [255, 128, 255]
-button_width = 100
+button_width = 50
 timer_to_next_question = 1000
 
 
 class SelectWord(Stage):
-    def __init__(self, network_client):
+    def __init__(self,
+                 network_client,
+                 drawing, choices, time_remaining, resolution,
+                 points):
         super(SelectWord, self).__init__()
 
-        self.main_pad = pad([220, 40], scale=1.05)
+        self.view_pad = pad([10, 20])
+        for draw_command in drawing:
+            mouse_down, pos = draw_command
+            self.view_pad.update(mouse_down, pos, use_screen_pos=False)
 
         self.client = network_client
-        self.player_answers = []
-        self.current_player_to_test = 0
+        self.timer = time_remaining
         self.wait_for_next_question = False
-        self.current_timer_to_next_question = 0
+        self.network_message = ""
+        self.lockdown_timer = 0
+        self.is_in_lockdown = False
+        self.points = points
 
-        col1 = 50
-        col2 = 750
-        row1 = 200
-        row2 = 500
-
-        self.buttons = [[col1, row1],
-                        [col2, row1],
-                        [col1, row2],
-                        [col2, row2]]
-        self.button_renders = []
+        self.buttons = []
+        self.player_answers = choices
+        self.generate_buttons(start_pos=[600, 30], max_width=resolution[0])
 
     def draw(self, screen):
         screen.fill([255, 255, 255])
 
-        self.main_pad.draw(screen)
+        self.view_pad.draw(screen)
         self.draw_answers(screen)
 
         self.draw_messages(screen, pos_y=600)
 
     def draw_answers(self, screen):
-        if self.current_player_to_test >= len(self.player_answers):
-            return
-
         for output, rect, pos in self.button_renders:
             pygame.draw.rect(screen,
                              button_back_color,
                              rect)
             screen.blit(output, pos)
 
-        commands = self.player_answers[self.current_player_to_test][1]
-        for draw_command in commands:
-            mouse_down, pos = draw_command
-            self.main_pad.update(mouse_down, pos, use_screen_pos=False)
-
-    def generate_buttons(self):
+    def generate_buttons(self, start_pos, max_width, padding=10):
         self.button_renders = []
 
-        answers = self.player_answers[self.current_player_to_test][0]
-        for pos, answer in zip(self.buttons, answers):
+        answers = self.player_answers
+        current_x, current_y = start_pos
+        max_height = 0
+        for answer in self.player_answers:
             output = self.NormalText.render(answer, True, [0, 0, 0])
+            pos = [current_x, current_y]
             rect = (output.get_rect()
-                    .move(*pos).inflate(button_width, button_width))
+                    .move(*pos)
+                    .inflate(button_width, button_width / 2))
+            max_height = max(max_height, rect.height + padding)
+
+            if rect.right >= max_width:
+                current_x = start_pos[0]
+                current_y += max_height
+                rect.move_ip(-pos[0], -pos[1])
+                rect.move_ip(current_x, current_y)
+                pos = [current_x, current_y]
+                max_height = 0
+
             self.button_renders.append([output, rect, pos])
-
-    def update_select_answer_stage(self, data):
-        while data is None:
-            # wait for the next broadcast
-            data = self.client.update_client_commands()
-
-        self.player_answers = data
-        self.switch_player_to_test()
-
-    def switch_player_to_test(self):
-        self.current_player_to_test = (
-            (self.current_player_to_test + 1) % len(self.player_answers))
-
-        self.messages = []
-        self.main_pad.clear()
-        self.generate_buttons()
+            current_x += rect.width + padding
 
     def update_broadcast_commands(self, packet, data):
-        pass
+        if packet == packets.DRAW:
+            player_id, mouse_down, mouse_pos = data
+            self.view_pad.update(mouse_down, mouse_pos, use_screen_pos=False)
+        elif packet == packets.ANSWER_FOUND:
+            self.client.request_results()
+        elif packet == packets.TIME:
+            self.timer = data[0]
 
-    def update_server_commands(self, data):
-        correct_answer = data["Correct Answer"]
-        self.messages = ["The correct answer is \"{}\"".format(correct_answer)]
+    def update_server_commands(self, packet, data):
+        if packet == packets.RESULTS:
+            data = data[0]
+            self.lockdown_timer = data["Time remaining"]
+            if self.lockdown_timer:
+                self.is_in_lockdown = True
+            self.timer = data["Next round timer"]
+            self.network_message = data["Message"]
+            self.points = data["Current points"]
 
     def _update_send_answer(self, answer_index):
-        self.client.send_answer(answer_index,
-                                self.current_player_to_test)
+        self.client.send_answer(answer_index)
 
-        self.wait_for_next_question = True
-        self.current_timer_to_next_question = timer_to_next_question
+    def update_messages(self):
+        messages = []
+
+        messages.append(self.network_message)
+
+        if self.timer > 0:
+            total_seconds = self.timer / 1000
+            minutes = int(total_seconds / 60)
+            seconds = int(total_seconds % 60)
+            message = "Time left for drawer: "
+            if minutes:
+                message += "{}:{} minutes".format(minutes, seconds)
+            else:
+                message += "{} seconds".format(seconds)
+
+            messages.append(message)
+        else:
+            messages.append("Waiting for server...")
+
+        self.messages = messages
 
     def update(self, clock, prev_mouse_down, mouse_down, mouse_pos):
-        if not mouse_down[0] and prev_mouse_down[0]:
-            # left click up
+        if (self.lockdown_timer <= 0 and
+           (not mouse_down[0] and prev_mouse_down[0])):
+            # player does left_click_up and is not in lockdown
             for answer_index, button in enumerate(self.button_renders):
                 output, rect, pos = button
                 if rect.collidepoint(mouse_pos):
@@ -104,9 +126,11 @@ class SelectWord(Stage):
 
                     break
 
-        if self.wait_for_next_question:
-            self.current_timer_to_next_question -= clock.get_time()
+        time = clock.get_time()
+        self.timer -= time
+        self.lockdown_timer -= time
+        if self.is_in_lockdown and self.lockdown_timer < 0:
+            self.is_in_lockdown = False
+            self.network_message = ""
 
-            if self.current_timer_to_next_question <= 0:
-                self.wait_for_next_question = False
-                self.switch_player_to_test()
+        self.update_messages()

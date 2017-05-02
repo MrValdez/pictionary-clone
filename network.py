@@ -7,8 +7,8 @@ broadcast_port = 668
 
 
 class client:
-    def __init__(self, player_name):
-        addr = "tcp://localhost:"
+    def __init__(self, player_name, server_address):
+        addr = "tcp://{}:".format(server_address)
 
         context = zmq.Context()
         broadcast = context.socket(zmq.SUB)
@@ -30,14 +30,14 @@ class client:
         self.client_poller = client_poller
         self.server_poller = server_poller
 
-        server.send_json([packets.CONNECT, [player_name]])
+        server.send_json([packets.CONNECT, player_name])
 
         current_game_state = server.recv_json()
         self.id = current_game_state["Player ID"]
         self.player_number = current_game_state["Player number"]
         self.drawing_answer = current_game_state["Drawing answer"]
 
-        self.send(packets.ACK_CONNECT, None)
+        self.send_request_for_stage_info()
 
     def _update_network_commands(self, socket, poller, recv_handler):
         socks = dict(poller.poll(10))
@@ -64,13 +64,19 @@ class client:
                                              self.server_poller,
                                              recv_json)
 
+    def send_request_for_stage_info(self):
+        self.send(packets.ACK_CONNECT, [self.id])
+
     def send_draw_command(self, mouse_down, position):
         data = [mouse_down, position]
         self.send(packets.DRAW, data)
 
-    def send_answer(self, answer_index, current_player_to_test):
-        data = [current_player_to_test, answer_index]
+    def send_answer(self, answer_index):
+        data = answer_index
         self.send(packets.SEND_ANSWER, data)
+
+    def request_results(self):
+        self.send(packets.REQUEST_RESULTS, [])
 
     def send(self, packet_type, data):
         self.server.send_json([packet_type, self.id, data])

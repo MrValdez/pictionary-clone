@@ -2,17 +2,23 @@ import os
 import packets
 import pygame
 import network
+import stage_base
 import stage_drawing
 import stage_select_word
 
 
 class GameEngine:
     def __init__(self):
+        self.player_name = input("What is your name? ")
+        #self.player_name = "Brave sir Robin"
+
+        server_address = input("Hostname/IP address of server? ")
+        #server_address = "localhost"
+        #server_address = "shuny"
+
+        self.client = network.client(self.player_name, server_address)
+
         os.environ["SDL_VIDEO_CENTERED"] = "1"
-
-        #self.player_name = input("What is your name? ")
-        self.player_name = "Brave sir Robin"
-
         pygame.init()
         pygame.font.init()
 
@@ -21,18 +27,36 @@ class GameEngine:
         pygame.display.set_caption("Pictionary clone")
         self.clock = pygame.time.Clock()
 
-        self._connect_to_server()
-
-        self.current_stage = stage_drawing.Drawing(self.client)
+        self.current_stage = stage_base.Stage()     # blank stage
         self.prev_mouse_down = pygame.mouse.get_pressed()
-
-    def _connect_to_server(self):
-        self.client = network.client(self.player_name)
 
     def draw(self):
         self.current_stage.draw(self.screen)
 
         pygame.display.update()
+
+    def transition_stage(self, packet, data):
+        if packet == packets.DRAWING_INFO:
+            data = data[0]
+            drawing_answer = data["Drawing answer"]
+            time_remaining = data["Time remaining"]
+            points = data["Player points"]
+            new_stage = stage_drawing.Drawing(self.client,
+                                              drawing_answer, time_remaining,
+                                              points)
+            self.current_stage = new_stage
+        elif packet == packets.GUESS_INFO:
+            data = data[0]
+            drawing = data["Drawing"]
+            choices = data["Choices"]
+            time_remaining = data["Time remaining"]
+            points = data["Player points"]
+            new_stage = stage_select_word.SelectWord(self.client,
+                                                     drawing, choices,
+                                                     time_remaining,
+                                                     self.resolution,
+                                                     points)
+            self.current_stage = new_stage
 
     def update_broadcast_commands(self):
         while True:
@@ -42,24 +66,27 @@ class GameEngine:
 
             packet, data = network_data[0], network_data[1:]
 
-            if packet == packets.SELECT_ANSWER_INFO:
-                # transition to next stage
-                self.current_stage = stage_select_word.SelectWord(self.client)
-                self.current_stage.update_select_answer_stage(data)
+            if packet == packets.REQUEST_NEXT_STAGE:
+                self.client.send_request_for_stage_info()
             else:
                 self.current_stage.update_broadcast_commands(packet, data)
 
     def update_server_commands(self):
         while True:
-            data = self.client.update_server_commands()
-            if not data:
+            network_data = self.client.update_server_commands()
+            if not network_data:
                 break
 
-            if data == packets.ACK:
+            if network_data == packets.ACK:
                 # server receives our message. move lockstep to server
                 break
 
-            self.current_stage.update_server_commands(data)
+            packet, data = network_data[0], network_data[1:]
+
+            if packet == packets.DRAWING_INFO or packet == packets.GUESS_INFO:
+                self.transition_stage(packet, data)
+            else:
+                self.current_stage.update_server_commands(packet, data)
 
     def update(self):
         self.clock.tick(60)
