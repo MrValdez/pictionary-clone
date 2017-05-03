@@ -30,9 +30,16 @@ class Engine:
     def update(self):
         self.network_update()
 
-        for action in self.actions:
-            action.run(self.gamestate)
+        actions_prev_frame = self.actions[:]
         self.actions = []
+        for action in actions_prev_frame:
+            if self.network.isServer:
+                action.run_server(self.gamestate)
+            else:
+                action.run(self.gamestate)
+
+            if action.network_command:
+                self.network.send(action)
 
         self.gamestate.update()
         if self.view:
@@ -48,6 +55,11 @@ class Engine:
             return
 
         for message in messages:
-            print(message)
-            packet, data = message
-            #self.apply()
+            try:
+                packet_name = message["packet"]
+                action = flux_game.ActionList.get(packet_name)
+                self.apply(action(message["data"]))
+            except TypeError:
+                print("Warning: Malformed packet")
+                print(message)
+                print("")

@@ -45,10 +45,6 @@ class pad:
         if mouse_down[2]:
             self.erase_brush(pos)
 
-        if mouse_down[0] or mouse_down[2]:
-            mouse_movements = pygame.mouse.get_rel()
-            self.drawing_delta += sum(map(abs, mouse_movements))
-
         if self.network_connection:
             self.network_connection.send_draw_command(mouse_down, pos)
 

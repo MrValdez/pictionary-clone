@@ -6,18 +6,32 @@ import pygame
 class Action_Connect(Action):
     packet_name = "CONNECT"
 
-    def __init__(self, player_name):
-        data = {"player_name": player_name}
-        super(Action_Connect, self).__init__(data)
-
-    def run(self, GameState):
-        GameState.addPlayer(self.Name)
+    def run_server(self, GameState):
+        GameState.addPlayer(self.data["player_name"])
 
 class Action_Draw(Action):
     packet_name = "DRAW"
+    network_command = True
 
     def run(self, GameState):
         GameState.main_pad.update(**self.data)
+
+    def run_server(self, GameState):
+        GameState.main_pad.update(**self.data)
+        GameState.engine.apply(Action_Draw_Broadcast(self.data))
+
+class Action_Draw_Broadcast(Action):
+    packet_name = "DRAW_BROADCAST"
+    network_command = True
+
+    def run(self, GameState):
+        GameState.main_pad.update(**self.data)
+
+# Future tech: automate the data entry instead of doing it manually
+ActionList = {"CONNECT": Action_Connect,
+              "DRAW": Action_Draw,
+              "DRAW_BROADCAST": Action_Draw_Broadcast}
+
 
 class DrawGame(GameState):
     def __init__(self):
@@ -36,4 +50,4 @@ class DrawGame(GameState):
 
     def addPlayer(self, name):
         self.name = name
-        print("Added " + name)
+        print("Added {}".format(name))
