@@ -1,37 +1,11 @@
 from drawingpad import pad
+from flux_gamebase import Action, GameState
 import pygame
 
 
-class Action:
-    def __init__(self):
-        pass
-
+class Action_Draw(Action):
     def run(self, GameState):
-        pass
-
-class GameState:
-    """
-    This is the store in the Flux architecture
-    """
-    def __init__(self):
-        self.NormalText = pygame.font.Font(None, 25)
-        self.messages = []
-        self.ui_points_pos = [970, 700]
-
-    def attach_engine(self, engine):
-        self.engine = engine
-
-    def update(self):
-        pass
-
-    def draw(self, screen):
-        pass
-
-    def draw_messages(self, screen, pos_y):
-        for message in self.messages:
-            output = self.NormalText.render(message, True, [0, 0, 0])
-            screen.blit(output, [40, pos_y])
-            pos_y += output.get_height() + 10
+        GameState.main_pad.update(**self.data)
 
 class DrawGame(GameState):
     def __init__(self):
@@ -39,9 +13,10 @@ class DrawGame(GameState):
 
         self.main_pad = pad([250, 40], network_connection=None)
         self.points = 0
+        self.clock = pygame.time.Clock()
 
     def update(self):
-        pass
+        self.clock.tick(60)
 
     def draw(self, screen):
         screen.fill([255, 255, 255])

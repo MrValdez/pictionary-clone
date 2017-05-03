@@ -1,7 +1,6 @@
 import os
 import pygame
-import stage_base
-
+import flux_game
 
 class View:
     def __init__(self):
@@ -10,6 +9,9 @@ class View:
 
     def attach_engine(self, engine):
         self.engine = engine
+
+    def send_action(self, action, data):
+        self.engine.apply(action)
 
     def draw(self):
         if self.screen is None:
@@ -37,9 +39,7 @@ class ClientView(View):
         self.resolution = [1024, 768]
         self.screen = pygame.display.set_mode(self.resolution)
         pygame.display.set_caption("Pictionary clone")
-        self.clock = pygame.time.Clock()
 
-        self.current_stage = stage_base.Stage()     # blank stage
         self.prev_mouse_down = pygame.mouse.get_pressed()
 
     def draw(self):
@@ -48,13 +48,13 @@ class ClientView(View):
         pygame.display.update()
 
     def update(self):
-        self.clock.tick(60)
-        
         mouse_down = pygame.mouse.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
 
-        # send actions
-        #self.engine.gamestate.update(self.clock,
-        #                             self.prev_mouse_down, mouse_down, mouse_pos)
+        if any(mouse_down):
+            data = {"mouse_down": mouse_down,
+                    "pos": mouse_pos}
+            action = flux_game.Action_Draw(data)
+            self.send_action(action, data)
 
         self.prev_mouse_down = mouse_down
