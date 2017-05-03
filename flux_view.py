@@ -40,10 +40,21 @@ class ClientView(View):
         self.screen = pygame.display.set_mode(self.resolution)
         pygame.display.set_caption("Pictionary clone")
 
+        self.NormalText = pygame.font.Font(None, 25)
+        self.ui_points_pos = [970, 700]
+
         self.prev_mouse_down = pygame.mouse.get_pressed()
 
     def draw(self):
         super(ClientView, self).draw()
+
+        screen = self.screen
+        screen.fill([255, 255, 255])
+
+        self.engine.gamestate.main_pad.draw(screen)
+
+        self.draw_messages(screen, pos_y=600)
+        self.draw_points(screen)
 
         pygame.display.update()
 
@@ -58,3 +69,21 @@ class ClientView(View):
             self.send_action(action, data)
 
         self.prev_mouse_down = mouse_down
+
+    def draw_messages(self, screen, pos_y):
+        for message in self.engine.gamestate.messages:
+            output = self.NormalText.render(message, True, [0, 0, 0])
+            screen.blit(output, [40, pos_y])
+            pos_y += output.get_height() + 10
+
+    def draw_points(self, screen):
+        points = self.engine.gamestate.points
+        points_text = self.NormalText.render(
+            "{} pts".format(points), True, [0, 0, 0])
+        pygame.draw.circle(screen,
+                           [255, 128, 128],
+                           self.ui_points_pos,
+                           points_text.get_width() + 10)
+        points_pos = points_text.get_rect()
+        points_pos.center = self.ui_points_pos
+        screen.blit(points_text,  points_pos)

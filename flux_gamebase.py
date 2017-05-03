@@ -16,9 +16,7 @@ class GameState:
     This is the store in the Flux architecture
     """
     def __init__(self):
-        self.NormalText = pygame.font.Font(None, 25)
-        self.messages = []
-        self.ui_points_pos = [970, 700]
+        pass
 
     def attach_engine(self, engine):
         self.engine = engine
@@ -28,10 +26,3 @@ class GameState:
 
     def draw(self, screen):
         pass
-
-    def draw_messages(self, screen, pos_y):
-        for message in self.messages:
-            output = self.NormalText.render(message, True, [0, 0, 0])
-            screen.blit(output, [40, pos_y])
-            pos_y += output.get_height() + 10
-
