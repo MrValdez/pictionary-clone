@@ -1,7 +1,12 @@
-import engine
+import flux_engine as engine
+import flux_view as view
+import flux_network as network
 import pygame
 
-game = engine.GameEngine()
+network = network.NetworkClient()
+client = view.ClientView()
+game = engine.Engine(network=network,
+                     view=client)
 
 isRunning = True
 while isRunning:
