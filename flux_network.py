@@ -1,5 +1,11 @@
 class Network:
-    pass
+    def update(self):
+        packet, data = None, None
+        return packet, data
+
+class NetworkServer(Network):
+    def __init__(self):
+        print("Server ready")
 
 class NetworkClient(Network):
     def __init__(self):

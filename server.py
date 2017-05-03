@@ -1,15 +1,14 @@
-import network
-import gamestate
+import flux_engine as engine
+import flux_view as view
+import flux_network as network
+import pygame
 
-server = network.Server()
-room = gamestate.Room(server)
+network = network.NetworkServer()
+server = engine.Engine(network=network)
 
-print("Server ready")
-while True:
+isRunning = True
+while isRunning:
     try:
-        packet, data = server.update()
-        room.update_network(packet, data)
-
-        room.update()
+        server.update()
     except KeyboardInterrupt:
-        break
+        isRunning = False
