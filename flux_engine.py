@@ -22,10 +22,18 @@ class Engine:
         view.attach_engine(self)
         self.view = view
 
+        self.actions = []
+
     def apply(self, action):
-        action.run(self.gamestate)
+        self.actions.append(action)
 
     def update(self):
+        self.network_update()
+
+        for action in self.actions:
+            action.run(self.gamestate)
+        self.actions = []
+
         self.gamestate.update()
         if self.view:
             self.view.update()
@@ -33,3 +41,13 @@ class Engine:
     def draw(self):
         if self.view:
             self.view.draw()
+
+    def network_update(self):
+        messages = self.network.update()
+        if not messages:
+            return
+
+        for message in messages:
+            print(message)
+            packet, data = message
+            #self.apply()

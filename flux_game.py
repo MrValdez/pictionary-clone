@@ -3,7 +3,19 @@ from flux_gamebase import Action, GameState
 import pygame
 
 
+class Action_Connect(Action):
+    packet_name = "CONNECT"
+
+    def __init__(self, player_name):
+        data = {"player_name": player_name}
+        super(Action_Connect, self).__init__(data)
+
+    def run(self, GameState):
+        GameState.addPlayer(self.Name)
+
 class Action_Draw(Action):
+    packet_name = "DRAW"
+
     def run(self, GameState):
         GameState.main_pad.update(**self.data)
 
@@ -21,3 +33,7 @@ class DrawGame(GameState):
 
     def draw(self, screen):
         pass
+
+    def addPlayer(self, name):
+        self.name = name
+        print("Added " + name)
