@@ -1,15 +1,6 @@
-class Action:
-    def __init__(self):
-        pass
+import flux_game
+import flux_view
 
-    def run(self, GameState):
-        pass
-
-class GameState:
-    """
-    This is the store in the Flux architecture
-    """
-    pass
 
 class Engine:
     """
@@ -21,14 +12,21 @@ class Engine:
         If view is None, then the Engine will not receive direct input and output.
         (It's still possible for the network to change the gamestate)
         """
-        self.gamestate = GameState()
-        self.view = view
+        self.gamestate = flux_game.DrawGame()
+        self.gamestate.attach_engine(self)
+
         self.network = network
+
+        if view is None:
+            view = flux_view.BaseView()
+        view.attach_engine(self)
+        self.view = view
 
     def apply(self, action):
         action.run(self.gamestate)
 
     def update(self):
+        self.gamestate.update()
         if self.view:
             self.view.update()
 
