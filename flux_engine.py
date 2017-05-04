@@ -57,8 +57,9 @@ class Engine:
             return
 
         messages, player_id = have_update
-        for message in messages:
-            self.parse_network_message(message, player_id)
+        if messages:
+            for message in messages:
+                self.parse_network_message(message, player_id)
 
     def parse_network_message(self, message, player_id):
         try:

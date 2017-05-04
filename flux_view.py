@@ -53,6 +53,10 @@ class ClientView(View):
 
         self.engine.gamestate.main_pad.draw(screen)
 
+        if not self.engine.gamestate.is_current_active_player():
+            print("Choices are:")
+            print(self.engine.gamestate.choices)
+
         self.draw_messages(screen, pos_y=600)
         self.draw_points(screen)
 

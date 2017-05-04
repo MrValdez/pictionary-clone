@@ -17,6 +17,8 @@ POINTS_GUESSER_WRONG = 1
 POINTS_DRAWER_CORRECTLY_GUESS = 30
 POINTS_DRAWER_TIMEOUT = -20
 
+NUMBER_OF_CHOICES = 5
+
 
 class Action_Connect(Action):
     packet_name = "CONNECT"
@@ -26,6 +28,7 @@ class Action_Connect(Action):
         data = {"id": id}
 
         GameState.run_action(Action_Connect_Ack(data, target_id=id))
+        GameState.run_action(Action_Init_Game(target_id=id))
         GameState.run_action(Action_Send_Canvas(target_id=id))
 
         # Action_Connect is the only packet that returns a value
@@ -43,7 +46,7 @@ class Action_Draw(Action):
     network_command = True
 
     def run(self, GameState):
-        if GameState.active_player != GameState.player_id:
+        if not GameState.is_current_active_player():
             # Inactive player can't draw
             self.network_command = False
             return
@@ -62,7 +65,7 @@ class Action_Draw_Broadcast(Action):
     network_command = True
 
     def run(self, GameState):
-        if GameState.active_player == GameState.player_id:
+        if GameState.is_current_active_player():
             # Ignore. We are the active player
             return
 
@@ -100,10 +103,12 @@ class Action_Init_Game(Action):
     def run(self, GameState):
         GameState.active_player = self.data["active_player_id"]
         GameState.drawing_answer = self.data["drawing_answer"]
+        GameState.choices = self.data["choices"]
 
     def run_server(self, GameState):
         self.data["active_player_id"] = GameState.active_player
         self.data["drawing_answer"] = GameState.drawing_answer
+        self.data["choices"] = GameState.choices
 
 
 # Future tech: automate the data entry instead of doing it manually
@@ -140,6 +145,7 @@ class DrawGame(GameState):
         self.timer = 5 * 60 * 1000
 
         self.drawing_answer = None
+        self.choices = []
 
         self.player_id = None
 
@@ -195,5 +201,21 @@ class DrawGame(GameState):
     def initialize_game(self):
         self.active_player = random.choice(self.players).id
         self.drawing_answer = random.choice(possible_drawings)
+        self.generate_choices()
         self.run_action(Action_Init_Game())
+
         print("New active player is: {}".format(self.active_player))
+
+    def generate_choices(self):
+        wrong_answers = list(possible_drawings)
+        wrong_answers.remove(self.drawing_answer)
+        wrong_answers = random.sample(wrong_answers, NUMBER_OF_CHOICES)
+        choices = wrong_answers + [self.drawing_answer]
+        random.shuffle(choices)
+
+        self.choices = choices
+
+        print("Choices are: {}".format(choices))
+
+    def is_current_active_player(self):
+        return self.active_player == self.player_id
