@@ -2,6 +2,7 @@ from drawingpad import pad
 from flux_gamebase import Action, GameState
 import itertools
 import pygame
+import random
 
 
 class Action_Connect(Action):
@@ -12,7 +13,8 @@ class Action_Connect(Action):
         data = {"id": id}
 
         GameState.run_action(Action_Connect_Ack(data, target_id=id))
-        GameState.run_action(Action_Send_Canvas({}, target_id=id))
+        GameState.run_action(Action_Send_Canvas(target_id=id))
+        GameState.run_action(Action_Init_Game(target_id=id))
 
         # Action_Connect is the only packet that returns a value
         return id
@@ -42,6 +44,7 @@ class Action_Draw_Broadcast(Action):
 class Action_Send_Canvas(Action):
     packet_name = "SEND_CANVAS"
     network_command = True
+    data_required = False
 
     def run(self, GameState):
         for draw in self.data["history"]:
@@ -62,13 +65,30 @@ class Action_Time_Tick(Action):
     def run_server(self, GameState):
         self.data["timer"] = GameState.timer
 
+class Action_Init_Game(Action):
+    packet_name = "INIT_GAME"
+    network_command = True
+    data_required = False
+
+    def run(self, GameState):
+        GameState.drawing_answer = self.data["drawing_answer"]
+
+    def run_server(self, GameState):
+        self.data["drawing_answer"] = GameState.drawing_answer
+
+
 # Future tech: automate the data entry instead of doing it manually
 ActionList = {"CONNECT": Action_Connect,
               "CONNECT_ACK": Action_Connect_Ack,
               "DRAW": Action_Draw,
               "DRAW_BROADCAST": Action_Draw_Broadcast,
               "SEND_CANVAS": Action_Send_Canvas,
-              "TIME_TICK": Action_Time_Tick}
+              "TIME_TICK": Action_Time_Tick,
+              "INIT_GAME": Action_Init_Game}
+
+possible_drawings = [answer
+                     for answer in open("answers.txt").read().split("\n")
+                     if len(answer) > 2]
 
 
 class Player:
@@ -86,8 +106,12 @@ class DrawGame(GameState):
 
         self.main_pad = pad([250, 40], network_connection=None)
         self.messages = []
+        self.network_message = None
         self.points = 0
         self.timer = 5 * 60 * 1000
+
+        self.drawing_answer = None
+        self.generate_answer()
 
         self.player_id = None
 
@@ -105,12 +129,12 @@ class DrawGame(GameState):
     def update_messages(self):
         messages = []
 
-#        if not self.network_message:
-#            message = ("Your drawing should be: \"{}\""
-#                       .format(self.drawing_answer))
-#            messages.append(message)
-#        else:
-#            messages.append(self.network_message)
+        if not self.network_message:
+            message = ("Your drawing should be: \"{}\""
+                       .format(self.drawing_answer))
+            messages.append(message)
+        else:
+            messages.append(self.network_message)
 
         total_seconds = self.timer / 1000
         minutes = int(total_seconds / 60)
@@ -134,3 +158,6 @@ class DrawGame(GameState):
 
     def get_player(self, player_id):
         return self.players.get(player_id, None)
+
+    def generate_answer(self):
+        self.drawing_answer = random.choice(possible_drawings)
