@@ -15,6 +15,8 @@ class pad:
         self.drawing_delta = 0
         self.network_connection = network_connection
 
+        self.history = []
+
     def clear(self):
         self.surface.fill(drawing_pad_color)
 
@@ -59,3 +61,4 @@ class pad:
                            color,
                            pos,
                            10)
+        self.history.append([pos, color])

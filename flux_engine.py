@@ -16,6 +16,7 @@ class Engine:
         self.gamestate.attach_engine(self)
 
         self.network = network
+        self.network.attach_engine(self)
 
         if view is None:
             view = flux_view.BaseView()
@@ -55,11 +56,24 @@ class Engine:
             return
 
         for message in messages:
-            try:
-                packet_name = message["packet"]
-                action = flux_game.ActionList.get(packet_name)
-                self.apply(action(message["data"]))
-            except TypeError:
-                print("Warning: Malformed packet")
-                print(message)
-                print("")
+            self.parse_network_message(message)
+
+    def parse_network_message(self, message):
+        try:
+            packet_name = message["packet"]
+            action_func = flux_game.ActionList.get(packet_name, None)
+            if action_func is None:
+                print("Warning: {} not registered".format(packet_name))
+                return
+
+            action = action_func(message["data"])
+            action.network_command = False  # if received as a network command, don't rebroadcast
+            self.apply(action)
+
+            return action
+        except TypeError as ex:
+            import pdb
+            pdb.set_trace()
+            print("Warning: Malformed packet")
+            print(message)
+            print("")
