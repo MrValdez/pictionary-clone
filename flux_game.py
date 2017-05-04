@@ -7,7 +7,7 @@ import random
 
 # Game constants
 STAGE_DRAWING_TIMER = 45 * 1000
-STAGE_DRAWING_TIMER = 6 * 1000
+#STAGE_DRAWING_TIMER = 6 * 1000
 
 TIME_BETWEEN_ROUNDS = 5 * 1000
 GUESSER_TIME_PENALTY = 7 * 1000
@@ -65,10 +65,6 @@ class Action_Draw_Broadcast(Action):
     network_command = True
 
     def run(self, GameState):
-        if GameState.is_current_active_player():
-            # Ignore. We are the active player
-            return
-
         GameState.main_pad.update(**self.data)
 
 class Action_Send_Canvas(Action):
@@ -77,6 +73,7 @@ class Action_Send_Canvas(Action):
     data_required = False
 
     def run(self, GameState):
+        GameState.main_pad.clear()
         for draw in self.data["history"]:
             GameState.main_pad.apply_brush(*draw)
 
@@ -116,6 +113,7 @@ class Action_GameState_Sync(Action):
         GameState.active_player = self.data["active_player_id"]
         GameState.drawing_answer = self.data["drawing_answer"]
         GameState.choices = self.data["choices"]
+        GameState.main_pad.clear()
 
     def run_server(self, GameState):
         self.data["active_player_id"] = GameState.active_player
@@ -213,6 +211,8 @@ class DrawGame(GameState):
 
     def initialize_game(self):
         self.timer = STAGE_DRAWING_TIMER
+
+        self.main_pad.clear()
         player = random.choice(self.players)
         self.active_player = player.id
         self.drawing_answer = random.choice(possible_drawings)

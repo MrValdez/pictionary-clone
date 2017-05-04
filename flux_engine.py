@@ -35,7 +35,6 @@ class Engine:
         self.actions = []
         for action in actions_prev_frame:
             if self.network.isServer:
-                action.source_player_id = None
                 action.run_server(self.gamestate)
             else:
                 action.run(self.gamestate)
