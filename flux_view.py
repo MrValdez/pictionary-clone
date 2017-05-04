@@ -2,6 +2,11 @@ import os
 import pygame
 import flux_game
 
+button_back_color = [255, 128, 255]
+button_width = 50
+timer_to_next_question = 1000
+
+
 class View:
     def __init__(self):
         self.engine = None
@@ -45,6 +50,8 @@ class ClientView(View):
 
         self.prev_mouse_down = pygame.mouse.get_pressed()
 
+        self.buttons = []
+
     def draw(self):
         super(ClientView, self).draw()
 
@@ -54,8 +61,8 @@ class ClientView(View):
         self.engine.gamestate.main_pad.draw(screen)
 
         if not self.engine.gamestate.is_current_active_player():
-            print("Choices are:")
-            print(self.engine.gamestate.choices)
+            self.generate_buttons(start_pos=[600, 30], max_width=self.resolution[0])
+            self.draw_answers(screen)
 
         self.draw_messages(screen, pos_y=600)
         self.draw_points(screen)
@@ -91,3 +98,37 @@ class ClientView(View):
         points_pos = points_text.get_rect()
         points_pos.center = self.ui_points_pos
         screen.blit(points_text,  points_pos)
+
+
+    # Stage_select_word
+    def generate_buttons(self, start_pos, max_width, padding=10):
+        self.button_renders = []
+
+        answers = self.engine.gamestate.choices
+        current_x, current_y = start_pos
+        max_height = 0
+        for answer in answers:
+            output = self.NormalText.render(answer, True, [0, 0, 0])
+            pos = [current_x, current_y]
+            rect = (output.get_rect()
+                    .move(*pos)
+                    .inflate(button_width, button_width / 2))
+            max_height = max(max_height, rect.height + padding)
+
+            if rect.right >= max_width:
+                current_x = start_pos[0]
+                current_y += max_height
+                rect.move_ip(-pos[0], -pos[1])
+                rect.move_ip(current_x, current_y)
+                pos = [current_x, current_y]
+                max_height = 0
+
+            self.button_renders.append([output, rect, pos])
+            current_x += rect.width + padding
+
+    def draw_answers(self, screen):
+        for output, rect, pos in self.button_renders:
+            pygame.draw.rect(screen,
+                             button_back_color,
+                             rect)
+            screen.blit(output, pos)
