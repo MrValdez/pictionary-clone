@@ -7,7 +7,7 @@ import random
 
 # Game constants
 STAGE_DRAWING_TIMER = 45 * 1000
-#STAGE_DRAWING_TIMER = 6 * 1000
+STAGE_DRAWING_TIMER = 6 * 1000
 
 TIME_BETWEEN_ROUNDS = 5 * 1000
 GUESSER_TIME_PENALTY = 7 * 1000
@@ -28,7 +28,7 @@ class Action_Connect(Action):
         data = {"id": id}
 
         GameState.run_action(Action_Connect_Ack(data, target_id=id))
-        GameState.run_action(Action_Init_Game(target_id=id))
+        GameState.run_action(Action_GameState_Sync(target_id=id))
         GameState.run_action(Action_Send_Canvas(target_id=id))
 
         # Action_Connect is the only packet that returns a value
@@ -94,9 +94,21 @@ class Action_Time_Tick(Action):
 
     def run_server(self, GameState):
         self.data["timer"] = GameState.timer
+        if GameState.timer < 0:
+            GameState.run_action(Action_Init_Game())
+            GameState.timer = TIME_BETWEEN_ROUNDS
 
 class Action_Init_Game(Action):
     packet_name = "INIT_GAME"
+    network_command = True
+    data_required = False
+
+    def run_server(self, GameState):
+        GameState.initialize_game()
+        GameState.run_action(Action_GameState_Sync())
+
+class Action_GameState_Sync(Action):
+    packet_name = "GAMESTATE_SYNC"
     network_command = True
     data_required = False
 
@@ -118,7 +130,8 @@ ActionList = {"CONNECT": Action_Connect,
               "DRAW_BROADCAST": Action_Draw_Broadcast,
               "SEND_CANVAS": Action_Send_Canvas,
               "TIME_TICK": Action_Time_Tick,
-              "INIT_GAME": Action_Init_Game}
+              "INIT_GAME": Action_Init_Game,
+              "GAMESTATE_SYNC": Action_GameState_Sync}
 
 possible_drawings = [answer
                      for answer in open("answers.txt").read().split("\n")
@@ -191,7 +204,7 @@ class DrawGame(GameState):
         print("Added {} with id {}".format(name, new_player.id))
 
         if should_initialize:
-            self.initialize_game()
+            self.run_action(Action_Init_Game())
 
         return new_player.id
 
@@ -199,12 +212,15 @@ class DrawGame(GameState):
         return self.players.get(player_id, None)
 
     def initialize_game(self):
-        self.active_player = random.choice(self.players).id
+        self.timer = STAGE_DRAWING_TIMER
+        player = random.choice(self.players)
+        self.active_player = player.id
         self.drawing_answer = random.choice(possible_drawings)
         self.generate_choices()
-        self.run_action(Action_Init_Game())
 
-        print("New active player is: {}".format(self.active_player))
+        print("")
+        print("New active player is: {} ({})".format(player.name, self.active_player))
+        print(" drawing: {}".format(self.drawing_answer))
 
     def generate_choices(self):
         wrong_answers = list(possible_drawings)
@@ -214,8 +230,6 @@ class DrawGame(GameState):
         random.shuffle(choices)
 
         self.choices = choices
-
-        print("Choices are: {}".format(choices))
 
     def is_current_active_player(self):
         return self.active_player == self.player_id
