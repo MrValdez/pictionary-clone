@@ -5,6 +5,19 @@ import pygame
 import random
 
 
+# Game constants
+STAGE_DRAWING_TIMER = 45 * 1000
+#STAGE_DRAWING_TIMER = 6 * 1000
+
+TIME_BETWEEN_ROUNDS = 5 * 1000
+GUESSER_TIME_PENALTY = 7 * 1000
+
+POINTS_GUESSER_CORRECT = 10
+POINTS_GUESSER_WRONG = 1
+POINTS_DRAWER_CORRECTLY_GUESS = 30
+POINTS_DRAWER_TIMEOUT = -20
+
+
 class Action_Connect(Action):
     packet_name = "CONNECT"
 
@@ -14,7 +27,6 @@ class Action_Connect(Action):
 
         GameState.run_action(Action_Connect_Ack(data, target_id=id))
         GameState.run_action(Action_Send_Canvas(target_id=id))
-        GameState.run_action(Action_Init_Game(target_id=id))
 
         # Action_Connect is the only packet that returns a value
         return id
@@ -23,14 +35,25 @@ class Action_Connect_Ack(Action):
     packet_name = "CONNECT_ACK"
     network_command = True
 
+    def run(self, GameState):
+        GameState.player_id = self.data["id"]
+
 class Action_Draw(Action):
     packet_name = "DRAW"
     network_command = True
 
     def run(self, GameState):
+        if GameState.active_player != GameState.player_id:
+            # Inactive player can't draw
+            self.network_command = False
+            return
+
         GameState.main_pad.update(**self.data)
 
     def run_server(self, GameState):
+        if GameState.active_player != self.source_player_id:
+            return
+
         GameState.main_pad.update(**self.data)
         GameState.run_action(Action_Draw_Broadcast(self.data))
 
@@ -39,6 +62,10 @@ class Action_Draw_Broadcast(Action):
     network_command = True
 
     def run(self, GameState):
+        if GameState.active_player == GameState.player_id:
+            # Ignore. We are the active player
+            return
+
         GameState.main_pad.update(**self.data)
 
 class Action_Send_Canvas(Action):
@@ -71,9 +98,11 @@ class Action_Init_Game(Action):
     data_required = False
 
     def run(self, GameState):
+        GameState.active_player = self.data["active_player_id"]
         GameState.drawing_answer = self.data["drawing_answer"]
 
     def run_server(self, GameState):
+        self.data["active_player_id"] = GameState.active_player
         self.data["drawing_answer"] = GameState.drawing_answer
 
 
@@ -111,17 +140,17 @@ class DrawGame(GameState):
         self.timer = 5 * 60 * 1000
 
         self.drawing_answer = None
-        self.generate_answer()
 
         self.player_id = None
 
         # server variables
         self.players = {}
+        self.active_player = None
 
     def update(self):
         super(DrawGame, self).update()
-        self.timer -= self.clock.get_time()
 
+        self.timer -= self.clock.get_time()
         self.run_action(Action_Time_Tick())
 
         self.update_messages()
@@ -150,14 +179,21 @@ class DrawGame(GameState):
         pass
 
     def addPlayer(self, name):
+        should_initialize = len(self.players) == 0
         new_player = Player(name)
         self.players[new_player.id] = new_player
         print("Added {} with id {}".format(name, new_player.id))
+
+        if should_initialize:
+            self.initialize_game()
 
         return new_player.id
 
     def get_player(self, player_id):
         return self.players.get(player_id, None)
 
-    def generate_answer(self):
+    def initialize_game(self):
+        self.active_player = random.choice(self.players).id
         self.drawing_answer = random.choice(possible_drawings)
+        self.run_action(Action_Init_Game())
+        print("New active player is: {}".format(self.active_player))

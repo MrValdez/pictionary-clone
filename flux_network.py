@@ -48,7 +48,7 @@ class NetworkServer(Network):
             if player:
                 self.client_conn.send_json(player.message_queue)
                 player.message_queue = []
-                return messages
+                return messages, player_id
             elif player is None:
                 # only connecting clients have None for player id
                 if len(messages) == 1:
@@ -134,4 +134,4 @@ class NetworkClient(Network):
             self.server.send_json([self.player_id] + self.message_queue)
             self.message_queue = []
 
-        return self.update_receive_commands()
+        return self.update_receive_commands(), self.player_id

@@ -35,6 +35,7 @@ class Engine:
         self.actions = []
         for action in actions_prev_frame:
             if self.network.isServer:
+                action.source_player_id = None
                 action.run_server(self.gamestate)
             else:
                 action.run(self.gamestate)
@@ -51,14 +52,15 @@ class Engine:
             self.view.draw()
 
     def network_update(self):
-        messages = self.network.update()
-        if not messages:
+        have_update = self.network.update()
+        if have_update is None:
             return
 
+        messages, player_id = have_update
         for message in messages:
-            self.parse_network_message(message)
+            self.parse_network_message(message, player_id)
 
-    def parse_network_message(self, message):
+    def parse_network_message(self, message, player_id):
         try:
             packet_name = message["packet"]
             action_func = flux_game.ActionList.get(packet_name, None)
@@ -67,6 +69,7 @@ class Engine:
                 return
 
             action = action_func(data=message["data"])
+            action.source_player_id = player_id
             action.network_command = False  # if received as a network command, don't rebroadcast
             self.apply(action)
 
