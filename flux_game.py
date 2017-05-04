@@ -50,12 +50,25 @@ class Action_Send_Canvas(Action):
     def run_server(self, GameState):
         self.data["history"] = GameState.main_pad.history
 
+class Action_Time_Tick(Action):
+    packet_name = "TIME_TICK"
+    network_command = True
+    data_required = False
+
+    def run(self, GameState):
+        if "timer" in self.data:
+            GameState.timer = self.data["timer"]
+
+    def run_server(self, GameState):
+        self.data["timer"] = GameState.timer
+
 # Future tech: automate the data entry instead of doing it manually
 ActionList = {"CONNECT": Action_Connect,
               "CONNECT_ACK": Action_Connect_Ack,
               "DRAW": Action_Draw,
               "DRAW_BROADCAST": Action_Draw_Broadcast,
-              "SEND_CANVAS": Action_Send_Canvas}
+              "SEND_CANVAS": Action_Send_Canvas,
+              "TIME_TICK": Action_Time_Tick}
 
 
 class Player:
@@ -74,7 +87,7 @@ class DrawGame(GameState):
         self.main_pad = pad([250, 40], network_connection=None)
         self.messages = []
         self.points = 0
-        self.clock = pygame.time.Clock()
+        self.timer = 5 * 60 * 1000
 
         self.player_id = None
 
@@ -82,7 +95,32 @@ class DrawGame(GameState):
         self.players = {}
 
     def update(self):
-        self.clock.tick(60)
+        super(DrawGame, self).update()
+        self.timer -= self.clock.get_time()
+
+        self.run_action(Action_Time_Tick())
+
+        self.update_messages()
+
+    def update_messages(self):
+        messages = []
+
+#        if not self.network_message:
+#            message = ("Your drawing should be: \"{}\""
+#                       .format(self.drawing_answer))
+#            messages.append(message)
+#        else:
+#            messages.append(self.network_message)
+
+        total_seconds = self.timer / 1000
+        minutes = int(total_seconds / 60)
+        seconds = int(total_seconds % 60)
+        messages.append("Time left: {}:{:02d}".format(minutes, seconds))
+
+        if self.timer <= 0:
+            messages.append("Waiting for server...")
+
+        self.messages = messages
 
     def draw(self, screen):
         pass
