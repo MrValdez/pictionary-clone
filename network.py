@@ -83,11 +83,11 @@ class NetworkClient(Network):
     def __init__(self):
         super(NetworkClient, self).__init__(isServer=False)
 
-        #self.player_name = input("What is your name? ")
-        self.player_name = "Brave sir Robin"
+        self.player_name = input("What is your name? ")
+        #self.player_name = "Brave sir Robin"
 
-        #server_address = input("Hostname/IP address of server? ")
-        server_address = "localhost"
+        server_address = input("Hostname/IP address of server? ")
+        #server_address = "localhost"
         #server_address = "shuny"
 
         addr = "tcp://{}:".format(server_address)
