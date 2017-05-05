@@ -113,6 +113,7 @@ class Action_GameState_Sync(Action):
         GameState.active_player = self.data["active_player_id"]
         GameState.drawing_answer = self.data["drawing_answer"]
         GameState.choices = self.data["choices"]
+        GameState.network_message = ""
         GameState.main_pad.clear()
 
     def run_server(self, GameState):
@@ -128,7 +129,8 @@ class Action_SendAnswer(Action):
     def run_server(self, GameState):
         is_correct = self.data["answer"] == GameState.correct_answer_index
         if is_correct:
-            action = Action_CorrectAnswer(target_id=self.source_player_id)
+            action = Action_CorrectAnswer({"winner_id": self.source_player_id},
+                                          target_id=self.source_player_id)
         else:
             action = Action_WrongAnswer({"lockdown_time": GUESSER_TIME_PENALTY},
                                         target_id=self.source_player_id)
@@ -148,10 +150,37 @@ class Action_WrongAnswer(Action):
 class Action_CorrectAnswer(Action):
     packet_name = "CORRECT_ANSWER"
     network_command = True
-    data_required = False
 
     def run(self, GameState):
         GameState.network_message = "CORRECT ANSWER!"
+
+    def run_server(self, GameState):
+        winning_player = GameState.get_player(self.data["winner_id"])
+        data = {"winner_name": winning_player.name,
+                "answer": GameState.drawing_answer,
+                "wait_time": TIME_BETWEEN_ROUNDS}
+
+        for player in GameState.players.values():
+            if player == winning_player:
+                continue
+
+            action = Action_CorrectAnswerBroadcast(data,
+                                                   target_id=player.id)
+            GameState.run_action(action)
+
+        GameState.timer = TIME_BETWEEN_ROUNDS
+
+class Action_CorrectAnswerBroadcast(Action):
+    packet_name = "CORRECT_ANSWER_BROADCAST"
+    network_command = True
+    data_required = False
+
+    def run(self, GameState):
+        message = "{} have found the answer! The correct answer is {}."
+        message = message.format(self.data["winner_name"],
+                                 self.data["answer"])
+        GameState.network_message = message
+        GameState.timer = self.data["wait_time"]
 
 # Future tech: automate the data entry instead of doing it manually
 ActionList = {"CONNECT": Action_Connect,
@@ -164,7 +193,8 @@ ActionList = {"CONNECT": Action_Connect,
               "GAMESTATE_SYNC": Action_GameState_Sync,
               "SEND_ANSWER": Action_SendAnswer,
               "WRONG_ANSWER": Action_WrongAnswer,
-              "CORRECT_ANSWER": Action_CorrectAnswer}
+              "CORRECT_ANSWER": Action_CorrectAnswer,
+              "CORRECT_ANSWER_BROADCAST": Action_CorrectAnswerBroadcast}
 
 possible_drawings = [answer
                      for answer in open("answers.txt").read().split("\n")
