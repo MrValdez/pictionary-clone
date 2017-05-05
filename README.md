@@ -4,56 +4,13 @@ This game is a combination of Pictionary, Pictomania, and Drawful (from You don'
 
 The game engine uses the [Flux programming pattern](https://facebook.github.io/flux/docs/in-depth-overview.html#content).
 
+Flux term | Game equivalent
+---- | ----
+Dispatch | Engine
+Store | Game
+View | View
 
-# Stages
-1. Drawing stage
-1.a. Bonus points for finishing earlier
-2. Guessing with choices (with timer)
-2.a. Multiplier for every correct guess
-3. Manual award (to be shown at awarding ceremony)
-4. Automatic award.
-5. Awarding ceremony.
-
-# Automatic awards
-Least energetic to draw
-    broad strokes
-Least used of ink
-    Small number of ink used
-Attention to detail
-    Tiny movement of drawing
-A lot of erasures
-Tries to cheat with letters!    (-10pts)
-
-# Backlog
-
-| Item | Description | Estimated cost (1-5) | Actual Cost |
-| ---- | ---- | ----: |
-| Drawing interface | | 3 | 2 |
-| Stream drawing to other clients | | 5 |
-| Send initial drawing to connecting clients | | 3 | 2 |
-| Connect multiple pygame clients to one server | | 4 | 4 |
-| Wait for other players | | 2 |  |
-| Game state manager | | 3 |
-| Stage 1 timer | | 2 | 2 |
-| Word animations | | 3 |
-| Apply Flux programming pattern | | 4 |
-| Send word choices (with correct word) to other clients | | 3 | 4 |
-| Select word answers and send to server for evaluation | | 3 | 3 |
-| Display correct word answer | | 3 | |
-| Manual awards | | 3 |
-| Awarding ceremony animations | | 4 |
-| Automatic awards | | 5 |
-| Polish | | 5 |
-
-# Network commands
-| Name | Sender | Description |
-| ---- | ---- | :---- |
-| CONNECT | CLIENT | Server will send the game room and its game state to the client. The server will also send the client's id and needs to be sent for every succeeding client connections |
-| GAMESTATE | SERVER | Client will receive the game state. It is up to the client to update its personal game state |
-| ACK | SERVER | Sent by the server to acknowledge receiving a client's packet |
-| DRAW | CLIENT | Server will parse the position the client draws. All connected clients will be updated of the new game state |
-| DRAW_UPDATE | SERVER | Client will receive a list of changes other clients have done. |
-
+I've noticed that the Action paradigm is equivalent to game design patterns for events.
 
 # Security issue
 
@@ -61,7 +18,24 @@ Tries to cheat with letters!    (-10pts)
 
 # Bugs
 
-1. Because the choices in STAGE_SELECT_ANSWER uses broadcast, any new clients that connected after the broadcast will miss the initial choices
+1. Some variables should be "server-side only" such as the correct answer. Currently, this is being broadcast to everyone.
+
+# Nice to have
+
+1. The actions list can be automatically populated (either via metaprogramming or a register command).
+2. Automatic awards:
+
+| Award | How to detect |
+| ---- | ---- |
+| Least energetic to draw | broad strokes |
+| Least used of ink | left click durations can be tracked |
+| Attention to detail | Tiny movement of mouse during drawings |
+| A lot of erasures | erasures can be tracked |
+| Tries to cheat with letters! | A neural network to look for letters? |
+
+3. More refactoring to farther decouple the dispatch, view, and store
+4. More polish
+5. Development logs to keep track (and visualize?) how the flux messaging flows between components.
 
 # Answers
 
