@@ -1,5 +1,5 @@
 from drawingpad import pad
-from flux_gamebase import Action, GameState
+from gamebase import Action, GameState
 import itertools
 import pygame
 import random

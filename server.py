@@ -1,6 +1,6 @@
-import flux_engine as engine
-import flux_view as view
-import flux_network as network
+import engine
+import view
+import network
 import pygame
 
 network = network.NetworkServer()

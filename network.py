@@ -1,6 +1,5 @@
 from time import sleep
-import packets
-from flux_game import Action_Connect, Action_Connect_Ack
+from game import Action_Connect, Action_Connect_Ack
 import zmq
 
 server_port = 667

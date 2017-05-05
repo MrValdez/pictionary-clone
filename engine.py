@@ -1,5 +1,5 @@
-import flux_game
-import flux_view
+import game
+import view as flux_view
 
 
 class Engine:
@@ -12,7 +12,7 @@ class Engine:
         If view is None, then the Engine will not receive direct input and output.
         (It's still possible for the network to change the gamestate)
         """
-        self.gamestate = flux_game.DrawGame()
+        self.gamestate = game.DrawGame()
         self.gamestate.attach_engine(self)
 
         self.network = network
@@ -63,7 +63,7 @@ class Engine:
     def parse_network_message(self, message, player_id):
         try:
             packet_name = message["packet"]
-            action_func = flux_game.ActionList.get(packet_name, None)
+            action_func = game.ActionList.get(packet_name, None)
             if action_func is None:
                 print("Warning: {} is not registered".format(packet_name))
                 return

@@ -1,6 +1,6 @@
 import os
 import pygame
-import flux_game
+import game
 
 button_back_color = [255, 128, 255]
 button_width = 50
@@ -104,13 +104,13 @@ class ClientView(View):
             if any(mouse_down):
                 data = {"mouse_down": mouse_down,
                         "pos": mouse_pos}
-                action = flux_game.Action_Draw(data)
+                action = game.Action_Draw(data)
         else:
             # answering stage
             answer_index = self.get_clicked_button(mouse_down, self.prev_mouse_down, mouse_pos)
             if answer_index is not None:
                 data = {"answer": answer_index}
-                action = flux_game.Action_SendAnswer(data)                
+                action = game.Action_SendAnswer(data)                
 
         if action and data:
             self.send_action(action, data)
