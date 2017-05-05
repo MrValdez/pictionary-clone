@@ -16,6 +16,7 @@ class Network:
     def update(self):
         return None
 
+
 class NetworkServer(Network):
     def __init__(self):
         super(NetworkServer, self).__init__(isServer=True)
@@ -57,7 +58,8 @@ class NetworkServer(Network):
                     message = messages[0]
                     packet_name = message["packet"]
                     if packet_name != Action_Connect.packet_name:
-                        print("Warning: expected CONNECT packet, but different packet received")
+                        print("Warning:")
+                        print(" expected CONNECT packet, but different packet received")
                         print(" Packet received is:", end="")
                         print(packet_name)
                         return None
@@ -78,6 +80,7 @@ class NetworkServer(Network):
             player = self.engine.gamestate.get_player(target_id)
             if player:
                 player.message_queue.append(action.toJSON())
+
 
 class NetworkClient(Network):
     def __init__(self):

@@ -34,12 +34,14 @@ class Action_Connect(Action):
         # Action_Connect is the only packet that returns a value
         return id
 
+
 class Action_Connect_Ack(Action):
     packet_name = "CONNECT_ACK"
     network_command = True
 
     def run(self, GameState):
         GameState.player_id = self.data["id"]
+
 
 class Action_Draw(Action):
     packet_name = "DRAW"
@@ -60,12 +62,14 @@ class Action_Draw(Action):
         GameState.main_pad.update(**self.data)
         GameState.run_action(Action_Draw_Broadcast(self.data))
 
+
 class Action_Draw_Broadcast(Action):
     packet_name = "DRAW_BROADCAST"
     network_command = True
 
     def run(self, GameState):
         GameState.main_pad.update(**self.data)
+
 
 class Action_Send_Canvas(Action):
     packet_name = "SEND_CANVAS"
@@ -79,6 +83,7 @@ class Action_Send_Canvas(Action):
 
     def run_server(self, GameState):
         self.data["history"] = GameState.main_pad.history
+
 
 class Action_Time_Tick(Action):
     packet_name = "TIME_TICK"
@@ -95,6 +100,7 @@ class Action_Time_Tick(Action):
             GameState.run_action(Action_Init_Game())
             GameState.timer = TIME_BETWEEN_ROUNDS
 
+
 class Action_Init_Game(Action):
     packet_name = "INIT_GAME"
     network_command = True
@@ -103,6 +109,7 @@ class Action_Init_Game(Action):
     def run_server(self, GameState):
         GameState.initialize_game()
         GameState.run_action(Action_GameState_Sync())
+
 
 class Action_GameState_Sync(Action):
     packet_name = "GAMESTATE_SYNC"
@@ -120,6 +127,7 @@ class Action_GameState_Sync(Action):
         self.data["active_player_id"] = GameState.active_player
         self.data["drawing_answer"] = GameState.drawing_answer
         self.data["choices"] = GameState.choices
+
 
 class Action_SendAnswer(Action):
     packet_name = "SEND_ANSWER"
@@ -150,6 +158,7 @@ class Action_SendAnswer(Action):
 
         GameState.run_action(action)
 
+
 class Action_WrongAnswer(Action):
     packet_name = "WRONG_ANSWER"
     network_command = True
@@ -165,6 +174,7 @@ class Action_WrongAnswer(Action):
                 "points_delta": POINTS_GUESSER_WRONG}
         action = Action_Update_Points(data)
         GameState.run_action(action)
+
 
 class Action_CorrectAnswer(Action):
     packet_name = "CORRECT_ANSWER"
@@ -210,6 +220,7 @@ class Action_CorrectAnswer(Action):
         action = Action_Update_Points(data)
         GameState.run_action(action)
 
+
 class Action_CorrectAnswerBroadcast(Action):
     packet_name = "CORRECT_ANSWER_BROADCAST"
     network_command = True
@@ -224,6 +235,7 @@ class Action_CorrectAnswerBroadcast(Action):
                                  self.data["drawer_points"])
         GameState.network_message = message
         GameState.timer = self.data["wait_time"]
+
 
 class Action_Update_Points(Action):
     packet_name = "UPDATE_POINTS"
@@ -271,6 +283,7 @@ class Player:
         self.lockdown_timer = 0
         self.points = 0
 
+
 class DrawGame(GameState):
     def __init__(self):
         super(DrawGame, self).__init__()
@@ -295,7 +308,8 @@ class DrawGame(GameState):
         self.players = {}
         self.active_player = None
 
-        # flag to check if active player should get penalty points if no one guessed the drawing
+        # flag to check if active player should get penalty points,
+        # if no one guessed the drawing
         self.someone_correctly_guessed = False
 
     def update(self):
@@ -322,7 +336,7 @@ class DrawGame(GameState):
         # server ticks
         for player in self.players.values():
             player.lockdown_timer -= time
-            
+
         self.run_action(Action_Time_Tick())
 
     def update_messages(self):
@@ -364,8 +378,10 @@ class DrawGame(GameState):
         return self.players.get(player_id, None)
 
     def initialize_game(self):
-        # check first if someone is drawing. If they are, give them penalty for being slow
-        if self.active_player is not None and not self.someone_correctly_guessed:
+        # check first if someone is drawing.
+        # If they are, give them penalty for being slow
+        if (self.active_player is not None and
+           not self.someone_correctly_guessed):
             data = {"id": self.active_player,
                     "points_delta": POINTS_DRAWER_TIMEOUT}
             self.run_action(Action_Update_Points(data))
@@ -381,7 +397,8 @@ class DrawGame(GameState):
         self.someone_correctly_guessed = False
 
         print("")
-        print("New active player is: {} ({})".format(player.name, self.active_player))
+        print("New active player is: {} ({})".format(player.name,
+                                                     self.active_player))
         print(" drawing: {}".format(self.drawing_answer))
 
     def generate_choices(self):

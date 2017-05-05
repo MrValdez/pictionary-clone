@@ -9,8 +9,9 @@ class Engine:
 
     def __init__(self, network, view=None):
         """
-        If view is None, then the Engine will not receive direct input and output.
-        (It's still possible for the network to change the gamestate)
+        If view is None, then the Engine will not receive
+        direct input and output. It will still possible for
+        the network to change the gamestate
         """
         self.gamestate = game.DrawGame()
         self.gamestate.attach_engine(self)
@@ -70,7 +71,10 @@ class Engine:
 
             action = action_func(data=message["data"])
             action.source_player_id = player_id
-            action.network_command = False  # if received as a network command, don't rebroadcast
+
+            # if received as a network command, don't rebroadcast
+            action.network_command = False
+
             self.apply(action)
 
             return action

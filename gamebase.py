@@ -36,6 +36,7 @@ class Action:
         """
         pass
 
+
 class GameState:
     """
     This is the store in the Flux architecture

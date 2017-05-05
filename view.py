@@ -27,8 +27,10 @@ class View:
     def update(self):
         pass
 
+
 class BaseView(View):
     pass
+
 
 class ClientView(View):
     """
@@ -61,7 +63,8 @@ class ClientView(View):
         self.engine.gamestate.main_pad.draw(screen)
 
         if not self.engine.gamestate.is_current_active_player():
-            self.generate_buttons(start_pos=[600, 30], max_width=self.resolution[0])
+            self.generate_buttons(start_pos=[600, 30],
+                                  max_width=self.resolution[0])
             self.draw_answers(screen)
 
         self.draw_messages(screen, pos_y=600)
@@ -107,10 +110,12 @@ class ClientView(View):
                 action = game.Action_Draw(data)
         else:
             # answering stage
-            answer_index = self.get_clicked_button(mouse_down, self.prev_mouse_down, mouse_pos)
+            answer_index = self.get_clicked_button(mouse_down,
+                                                   self.prev_mouse_down,
+                                                   mouse_pos)
             if answer_index is not None:
                 data = {"answer": answer_index}
-                action = game.Action_SendAnswer(data)                
+                action = game.Action_SendAnswer(data)
 
         if action and data:
             self.send_action(action, data)
@@ -134,7 +139,6 @@ class ClientView(View):
         points_pos = points_text.get_rect()
         points_pos.center = self.ui_points_pos
         screen.blit(points_text,  points_pos)
-
 
     # Stage_select_word
     def generate_buttons(self, start_pos, max_width, padding=10):
