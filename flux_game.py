@@ -127,6 +127,13 @@ class Action_SendAnswer(Action):
     data_required = False
 
     def run_server(self, GameState):
+        player = GameState.get_player(self.source_player_id)
+        if player.lockdown_timer > 0:
+            message = "Player \"{}\" tried to cheat by sending an answer during lockdown"
+            message = message.format(player.name)
+            print(message)
+            return
+
         is_correct = self.data["answer"] == GameState.correct_answer_index
         if is_correct:
             action = Action_CorrectAnswer({"winner_id": self.source_player_id},
@@ -134,6 +141,7 @@ class Action_SendAnswer(Action):
         else:
             action = Action_WrongAnswer({"lockdown_time": GUESSER_TIME_PENALTY},
                                         target_id=self.source_player_id)
+            player.lockdown_timer = GUESSER_TIME_PENALTY
 
         GameState.run_action(action)
 
@@ -209,6 +217,7 @@ class Player:
         self.message_queue = []
 
         self.id = next(self.unique_id)
+        self.lockdown_timer = 0
 
 class DrawGame(GameState):
     def __init__(self):
@@ -234,14 +243,22 @@ class DrawGame(GameState):
     def update(self):
         super(DrawGame, self).update()
 
-        self.timer -= self.clock.get_time()
+        self.update_timers()
+        self.update_messages()
+
+    def update_timers(self):
+        time = self.clock.get_time()
+        self.timer -= time
         if self.lockdown_timer > 0:
-            self.lockdown_timer -= self.clock.get_time()
+            self.lockdown_timer -= time
             if self.lockdown_timer < 0:
                 self.network_message = ""
-        self.run_action(Action_Time_Tick())
 
-        self.update_messages()
+        # server ticks
+        for player in self.players.values():
+            player.lockdown_timer -= time
+            
+        self.run_action(Action_Time_Tick())
 
     def update_messages(self):
         messages = []
