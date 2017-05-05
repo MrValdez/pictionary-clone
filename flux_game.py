@@ -7,7 +7,7 @@ import random
 
 # Game constants
 STAGE_DRAWING_TIMER = 45 * 1000
-#STAGE_DRAWING_TIMER = 6 * 1000
+STAGE_DRAWING_TIMER = 6 * 1000
 
 TIME_BETWEEN_ROUNDS = 5 * 1000
 GUESSER_TIME_PENALTY = 7 * 1000
@@ -176,6 +176,7 @@ class Action_CorrectAnswer(Action):
         GameState.network_message = message
 
     def run_server(self, GameState):
+        GameState.someone_correctly_guessed = True
         winning_player = GameState.get_player(self.data["winner_id"])
         drawing_player = GameState.get_player(GameState.active_player)
 
@@ -291,6 +292,9 @@ class DrawGame(GameState):
         self.players = {}
         self.active_player = None
 
+        # flag to check if active player should get penalty points if no one guessed the drawing
+        self.someone_correctly_guessed = False
+
     def update(self):
         super(DrawGame, self).update()
 
@@ -350,6 +354,12 @@ class DrawGame(GameState):
         return self.players.get(player_id, None)
 
     def initialize_game(self):
+        # check first if someone is drawing. If they are, give them penalty for being slow
+        if self.active_player is not None and not self.someone_correctly_guessed:
+            data = {"id": self.active_player,
+                    "points_delta": POINTS_DRAWER_TIMEOUT}
+            self.run_action(Action_Update_Points(data))
+
         self.timer = STAGE_DRAWING_TIMER
 
         self.main_pad.clear()
@@ -357,6 +367,8 @@ class DrawGame(GameState):
         self.active_player = player.id
         self.drawing_answer = random.choice(possible_drawings)
         self.generate_choices()
+
+        self.someone_correctly_guessed = False
 
         print("")
         print("New active player is: {} ({})".format(player.name, self.active_player))
