@@ -70,13 +70,49 @@ class ClientView(View):
         pygame.display.update()
 
     def update(self):
+        self.update_mouseclicks()
+        self.update_messages()
+
+    def update_messages(self):
+        if self.engine.gamestate.is_current_active_player():
+            return
+
+        # messages for inactive players
+        message = ""
+        timer = self.engine.gamestate.lockdown_timer
+
+        if timer > 0:
+            total_seconds = timer / 1000
+            minutes = int(total_seconds / 60)
+            seconds = int(total_seconds % 60)
+            message = "Lockdown for : "
+            if minutes:
+                message += "{}:{} minutes".format(minutes, seconds)
+            else:
+                message += "{} seconds".format(seconds)
+
+            self.engine.gamestate.messages.append(message)
+
+    def update_mouseclicks(self):
         mouse_down = pygame.mouse.get_pressed()
         mouse_pos = pygame.mouse.get_pos()
 
-        if any(mouse_down):
-            data = {"mouse_down": mouse_down,
-                    "pos": mouse_pos}
-            action = flux_game.Action_Draw(data)
+        action, data = None, None
+
+        if self.engine.gamestate.is_current_active_player():
+            # drawing stage
+            if any(mouse_down):
+                data = {"mouse_down": mouse_down,
+                        "pos": mouse_pos}
+                action = flux_game.Action_Draw(data)
+        else:
+            # answering stage
+            answer_index = self.get_clicked_button(mouse_down, self.prev_mouse_down, mouse_pos)
+            if answer_index is not None:
+                data = {"answer": answer_index}
+                action = flux_game.Action_SendAnswer(data)                
+
+        if action and data:
             self.send_action(action, data)
 
         self.prev_mouse_down = mouse_down
@@ -132,3 +168,14 @@ class ClientView(View):
                              button_back_color,
                              rect)
             screen.blit(output, pos)
+
+    def get_clicked_button(self, mouse_down, prev_mouse_down, mouse_pos):
+        if (self.engine.gamestate.lockdown_timer <= 0 and
+           (not mouse_down[0] and prev_mouse_down[0])):
+            # player does left_click_up and is not in lockdown
+            for answer_index, button in enumerate(self.button_renders):
+                output, rect, pos = button
+                if rect.collidepoint(mouse_pos):
+                    return answer_index
+
+        return None

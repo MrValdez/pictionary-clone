@@ -120,6 +120,38 @@ class Action_GameState_Sync(Action):
         self.data["drawing_answer"] = GameState.drawing_answer
         self.data["choices"] = GameState.choices
 
+class Action_SendAnswer(Action):
+    packet_name = "SEND_ANSWER"
+    network_command = True
+    data_required = False
+
+    def run_server(self, GameState):
+        is_correct = self.data["answer"] == GameState.correct_answer_index
+        if is_correct:
+            action = Action_CorrectAnswer(target_id=self.source_player_id)
+        else:
+            action = Action_WrongAnswer({"lockdown_time": GUESSER_TIME_PENALTY},
+                                        target_id=self.source_player_id)
+
+        GameState.run_action(action)
+
+        #check that data is correct; if it is, send appropriate action
+
+class Action_WrongAnswer(Action):
+    packet_name = "WRONG_ANSWER"
+    network_command = True
+
+    def run(self, GameState):
+        GameState.lockdown_timer = self.data["lockdown_time"]
+        GameState.network_message = "Wrong answer. You are on lockdown."
+
+class Action_CorrectAnswer(Action):
+    packet_name = "CORRECT_ANSWER"
+    network_command = True
+    data_required = False
+
+    def run(self, GameState):
+        GameState.network_message = "CORRECT ANSWER!"
 
 # Future tech: automate the data entry instead of doing it manually
 ActionList = {"CONNECT": Action_Connect,
@@ -129,7 +161,10 @@ ActionList = {"CONNECT": Action_Connect,
               "SEND_CANVAS": Action_Send_Canvas,
               "TIME_TICK": Action_Time_Tick,
               "INIT_GAME": Action_Init_Game,
-              "GAMESTATE_SYNC": Action_GameState_Sync}
+              "GAMESTATE_SYNC": Action_GameState_Sync,
+              "SEND_ANSWER": Action_SendAnswer,
+              "WRONG_ANSWER": Action_WrongAnswer,
+              "CORRECT_ANSWER": Action_CorrectAnswer}
 
 possible_drawings = [answer
                      for answer in open("answers.txt").read().split("\n")
@@ -157,8 +192,10 @@ class DrawGame(GameState):
 
         self.drawing_answer = None
         self.choices = []
+        self.correct_answer_index = 0
 
         self.player_id = None
+        self.lockdown_timer = 0
 
         # server variables
         self.players = {}
@@ -168,6 +205,7 @@ class DrawGame(GameState):
         super(DrawGame, self).update()
 
         self.timer -= self.clock.get_time()
+        self.lockdown_timer -= self.clock.get_time()
         self.run_action(Action_Time_Tick())
 
         self.update_messages()
@@ -176,9 +214,10 @@ class DrawGame(GameState):
         messages = []
 
         if not self.network_message:
-            message = ("Your drawing should be: \"{}\""
-                       .format(self.drawing_answer))
-            messages.append(message)
+            if self.is_current_active_player():
+                message = ("Your drawing should be: \"{}\""
+                           .format(self.drawing_answer))
+                messages.append(message)
         else:
             messages.append(self.network_message)
 
@@ -230,6 +269,7 @@ class DrawGame(GameState):
         random.shuffle(choices)
 
         self.choices = choices
+        self.correct_answer_index = choices.index(self.drawing_answer)
 
     def is_current_active_player(self):
         return self.active_player == self.player_id
