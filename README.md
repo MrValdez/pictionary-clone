@@ -26,10 +26,7 @@ I've noticed that the Action paradigm is equivalent to game design patterns for 
 2. Automatic awards:
 
 | Award | How to detect |
-<<<<<<< HEAD
 | ---- | ---- |
-=======
->>>>>>> f113175f274f63867bee71d947056bbd0c5e6f22
 | Least energetic to draw | broad strokes |
 | Least used of ink | left click durations can be tracked |
 | Attention to detail | Tiny movement of mouse during drawings |
