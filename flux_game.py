@@ -135,17 +135,20 @@ class Action_SendAnswer(Action):
             return
 
         is_correct = self.data["answer"] == GameState.correct_answer_index
+
         if is_correct:
-            action = Action_CorrectAnswer({"winner_id": self.source_player_id},
+            data = {"winner_id": self.source_player_id,
+                    "points": POINTS_GUESSER_CORRECT}
+            action = Action_CorrectAnswer(data,
                                           target_id=self.source_player_id)
         else:
-            action = Action_WrongAnswer({"lockdown_time": GUESSER_TIME_PENALTY},
+            data = {"lockdown_time": GUESSER_TIME_PENALTY,
+                    "points": POINTS_GUESSER_WRONG}
+            action = Action_WrongAnswer(data,
                                         target_id=self.source_player_id)
             player.lockdown_timer = GUESSER_TIME_PENALTY
 
         GameState.run_action(action)
-
-        #check that data is correct; if it is, send appropriate action
 
 class Action_WrongAnswer(Action):
     packet_name = "WRONG_ANSWER"
@@ -153,20 +156,37 @@ class Action_WrongAnswer(Action):
 
     def run(self, GameState):
         GameState.lockdown_timer = self.data["lockdown_time"]
-        GameState.network_message = "Wrong answer. You are on lockdown."
+        message = "Wrong answer. You are on lockdown. You get {} points"
+        message = message.format(self.data["points"])
+        GameState.network_message = message
+
+    def run_server(self, GameState):
+        data = {"id": self.target_id,
+                "points_delta": POINTS_GUESSER_WRONG}
+        action = Action_Update_Points(data)
+        GameState.run_action(action)
 
 class Action_CorrectAnswer(Action):
     packet_name = "CORRECT_ANSWER"
     network_command = True
 
     def run(self, GameState):
-        GameState.network_message = "CORRECT ANSWER!"
+        message = "CORRECT ANSWER! You get {} points"
+        message = message.format(self.data["points"])
+        GameState.network_message = message
 
     def run_server(self, GameState):
         winning_player = GameState.get_player(self.data["winner_id"])
+        drawing_player = GameState.get_player(GameState.active_player)
+
+        # send the player how many points they receive
+        self.data["points"] = POINTS_GUESSER_CORRECT
+
         data = {"winner_name": winning_player.name,
+                "drawer_name": drawing_player.name,
                 "answer": GameState.drawing_answer,
-                "wait_time": TIME_BETWEEN_ROUNDS}
+                "wait_time": TIME_BETWEEN_ROUNDS,
+                "drawer_points": POINTS_DRAWER_CORRECTLY_GUESS}
 
         for player in GameState.players.values():
             if player == winning_player:
@@ -178,17 +198,46 @@ class Action_CorrectAnswer(Action):
 
         GameState.timer = TIME_BETWEEN_ROUNDS
 
+        # update points for drawer and winning guesser
+        data = {"id": self.target_id,
+                "points_delta": POINTS_GUESSER_CORRECT}
+        action = Action_Update_Points(data)
+        GameState.run_action(action)
+
+        data = {"id": drawing_player.id,
+                "points_delta": POINTS_DRAWER_CORRECTLY_GUESS}
+        action = Action_Update_Points(data)
+        GameState.run_action(action)
+
 class Action_CorrectAnswerBroadcast(Action):
     packet_name = "CORRECT_ANSWER_BROADCAST"
     network_command = True
     data_required = False
 
     def run(self, GameState):
-        message = "{} have found the answer! The correct answer is {}."
+        message = "{} have found the answer! The correct answer is \"{}.\" "
         message = message.format(self.data["winner_name"],
                                  self.data["answer"])
+        message += "{} gets {} points."
+        message = message.format(self.data["drawer_name"],
+                                 self.data["drawer_points"])
         GameState.network_message = message
         GameState.timer = self.data["wait_time"]
+
+class Action_Update_Points(Action):
+    packet_name = "UPDATE_POINTS"
+    network_command = True
+    data_required = False
+
+    def run(self, GameState):
+        GameState.points = self.data["points"]
+
+    def run_server(self, GameState):
+        player = GameState.get_player(self.data["id"])
+        player.points += self.data["points_delta"]
+
+        self.data = {"points": player.points}
+        self.target_id = player.id
 
 # Future tech: automate the data entry instead of doing it manually
 ActionList = {"CONNECT": Action_Connect,
@@ -202,7 +251,8 @@ ActionList = {"CONNECT": Action_Connect,
               "SEND_ANSWER": Action_SendAnswer,
               "WRONG_ANSWER": Action_WrongAnswer,
               "CORRECT_ANSWER": Action_CorrectAnswer,
-              "CORRECT_ANSWER_BROADCAST": Action_CorrectAnswerBroadcast}
+              "CORRECT_ANSWER_BROADCAST": Action_CorrectAnswerBroadcast,
+              "UPDATE_POINTS": Action_Update_Points}
 
 possible_drawings = [answer
                      for answer in open("answers.txt").read().split("\n")
@@ -218,6 +268,7 @@ class Player:
 
         self.id = next(self.unique_id)
         self.lockdown_timer = 0
+        self.points = 0
 
 class DrawGame(GameState):
     def __init__(self):
