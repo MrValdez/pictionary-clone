@@ -7,7 +7,7 @@ import random
 
 # Game constants
 STAGE_DRAWING_TIMER = 45 * 1000
-STAGE_DRAWING_TIMER = 6 * 1000
+#STAGE_DRAWING_TIMER = 6 * 1000
 
 TIME_BETWEEN_ROUNDS = 5 * 1000
 GUESSER_TIME_PENALTY = 7 * 1000
@@ -17,7 +17,7 @@ POINTS_GUESSER_WRONG = 1
 POINTS_DRAWER_CORRECTLY_GUESS = 30
 POINTS_DRAWER_TIMEOUT = -20
 
-NUMBER_OF_CHOICES = 10
+NUMBER_OF_CHOICES = 18
 
 
 class Action_Connect(Action):
@@ -275,7 +275,10 @@ class DrawGame(GameState):
     def __init__(self):
         super(DrawGame, self).__init__()
 
-        self.main_pad = pad([250, 40], network_connection=None)
+        self.main_pad_drawer_pos = [250, 40]
+        self.main_pad_guesser_pos = [20, 40]
+
+        self.main_pad = pad(self.main_pad_drawer_pos, network_connection=None)
         self.messages = []
         self.network_message = None
         self.points = 0
@@ -300,6 +303,13 @@ class DrawGame(GameState):
 
         self.update_timers()
         self.update_messages()
+        self.update_pad_position()
+
+    def update_pad_position(self):
+        if self.is_current_active_player():
+            self.main_pad.move(self.main_pad_drawer_pos)
+        else:
+            self.main_pad.move(self.main_pad_guesser_pos)
 
     def update_timers(self):
         time = self.clock.get_time()

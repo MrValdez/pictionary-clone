@@ -17,6 +17,9 @@ class pad:
 
         self.history = []
 
+    def move(self, new_pos):
+        self.screen_pos = new_pos[:]
+
     def clear(self):
         self.surface.fill(drawing_pad_color)
 
