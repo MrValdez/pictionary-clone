@@ -205,7 +205,10 @@ class DrawGame(GameState):
         super(DrawGame, self).update()
 
         self.timer -= self.clock.get_time()
-        self.lockdown_timer -= self.clock.get_time()
+        if self.lockdown_timer > 0:
+            self.lockdown_timer -= self.clock.get_time()
+            if self.lockdown_timer < 0:
+                self.network_message = ""
         self.run_action(Action_Time_Tick())
 
         self.update_messages()
