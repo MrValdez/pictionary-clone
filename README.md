@@ -1,3 +1,8 @@
+# Requirements
+- Python 3
+- pygame
+- pyzmq
+
 # Game introduction
 
 This game is a combination of Pictionary, Pictomania, and Drawful (from You don't know Jack) with my own additional game design additions.
@@ -14,6 +19,27 @@ A guesser sent a wrong answer | 0 | 1
 Someone guessed the Drawing Player's phrase correctly | 30 | 10
 No one correctly guessed the Drawing Player's phrase | 0 |  -20
 
+# How to play
+
+1. Set up the server by running server.py. To exit the server, use Ctrl+C.
+
+```python server.py```
+
+2. Open the client by running main.py. To exit the client, press ESCAPE.
+
+```python main.py```
+
+3. You'll need at least two clients running to play.
+
+4. Note: The game don't handle clients exiting; so if a player drops, I suggest rerunning the server.
+
+5. Every round, a player is chosen as a drawer. Their objective is to draw the abstract topic given to them.
+- To draw, use the left mouse click.
+- To erase, use the right mouse click.
+
+6. The other players will guess what the drawer's topic is based on the choices given.
+
+7. Once time runs out or someone guesses correctly, the next round is played. Goto step 5.
 
 # Game Programming architecture
 
